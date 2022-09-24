@@ -79,7 +79,7 @@ public class HandleUpdateService
 
         async Task<Message> Refresh(ITelegramBotClient bot)
         {
-            if (message.Chat.PinnedMessage == null)
+            if (chat.PinnedMessage == null)
             {
                 _logger.LogInformation("Missing Pinned message.");
                 return await _botClient.SendTextMessageAsync(chat, "⚓️ Please setup your Vessel via /Setup command. ⚓️");
