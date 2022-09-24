@@ -1,4 +1,7 @@
 ﻿using Newtonsoft.Json;
+using System.Diagnostics.Metrics;
+using System.Numerics;
+using System.Xml.Linq;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -13,8 +16,6 @@ public class HandleUpdateService
     private readonly ILogger<HandleUpdateService> _logger;
     private VesselsManager vesselManager; 
 
-    private string enterVessel = "Please enter Vessel name.";
-
     public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger)
     {
         _botClient = botClient;
@@ -25,10 +26,12 @@ public class HandleUpdateService
 
     public async Task EchoAsync(Update update)
     {
+        Chat chat = GetChat(update).Result;
+
         var handler = update.Type switch
         {
-            UpdateType.Message            => BotOnMessageReceived(update.Message!),
-            UpdateType.EditedMessage      => BotOnMessageReceived(update.EditedMessage!),
+            UpdateType.Message            => BotOnMessageReceived(update, chat),
+            UpdateType.EditedMessage      => BotOnMessageReceived(update, chat),
             _                             => UnknownUpdateHandlerAsync(update)
         };
 
@@ -44,37 +47,42 @@ public class HandleUpdateService
         }
     }
 
-    private async Task BotOnMessageReceived(Message message)
+    private async Task<Chat> GetChat(Update update)
     {
-        _logger.LogInformation("Receive message type: {message.Type}", message.Type);
-        _logger.LogInformation("From: {message.From.FirstName} {message.From.LastName}", message.From.FirstName, message.From.LastName);
-        _logger.LogInformation("MessageText: {message.Text}", message.Text);
-        if (message.Type != MessageType.Text)
+        return await _botClient.GetChatAsync(update.Message.Chat.Id);
+    }
+
+    private async Task BotOnMessageReceived(Update update, Chat chat)
+    {
+        _logger.LogInformation("Receive message type: {message.Type}", update.Message.Type);
+        _logger.LogInformation("From: {message.From.FirstName} {message.From.LastName}", update.Message.From.FirstName, update.Message.From.LastName);
+        _logger.LogInformation("MessageText: {message.Text}", update.Message.Text);
+        if (update.Message.Type != MessageType.Text)
             return;
 
-        var action = message.Text!.Split(' ')[0] switch
+        var action = update.Message.Text!.Split(' ')[0] switch
         {
-            "/setup"   => Setup(_botClient, message),
-            "/refresh" => Refresh(_botClient, message),
-            _          => CheckIfNameLegit(_botClient, message)
+            "/setup"   => Setup(_botClient),
+            "/refresh" => Refresh(_botClient),
+            _          => CheckIfNameLegit(_botClient)
         };
 
         Message sentMessage = await action;
         _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
         _logger.LogInformation("Sent message text:{SentMessageId}", sentMessage.Text);
 
-        async Task<Message> Setup(ITelegramBotClient bot, Message message)
+        async Task<Message> Setup(ITelegramBotClient bot)
         {
-            await bot.UnpinAllChatMessages(message.Chat.Id);
-            return await bot.SendTextMessageAsync(message.Chat.Id, enterVessel);
+            await bot.UnpinAllChatMessages(chat);
+            return await bot.SendTextMessageAsync(chat, "Please enter Vessel name.");
         }
 
-        async Task<Message> Refresh(ITelegramBotClient bot, Message message)
+        async Task<Message> Refresh(ITelegramBotClient bot)
         {
             if (message.Chat.PinnedMessage == null)
             {
                 _logger.LogInformation("Missing Pinned message.");
-                return await _botClient.SendTextMessageAsync(message.Chat.Id, "⚓️ Please setup your Vessel via /Setup command. ⚓️");
+                return await _botClient.SendTextMessageAsync(chat, "⚓️ Please setup your Vessel via /Setup command. ⚓️");
             }
             else
             {
@@ -84,32 +92,32 @@ public class HandleUpdateService
 
         async Task<Message> SendSchedule()
         {
-            var ship = vesselManager.ships.Find(ship => ship.ShipName == message.Chat.PinnedMessage.Text);
+            var ship = vesselManager.ships.Find(ship => ship.ShipName == chat.PinnedMessage.Text);
             int shipIndex = vesselManager.ships.IndexOf(ship);
             vesselManager.UpdateShipPorts(shipIndex);
             _logger.LogInformation("Sending schedule for {ship.ShipName}", ship.ShipName);
-            return await _botClient.SendTextMessageAsync(message.Chat.Id, vesselManager.BuildSchedule(shipIndex),ParseMode.Html);
+            return await _botClient.SendTextMessageAsync(chat, vesselManager.BuildSchedule(shipIndex),ParseMode.Html);
         }
 
-        async Task<Message> CheckIfNameLegit(ITelegramBotClient bot, Message message)
+        async Task<Message> CheckIfNameLegit(ITelegramBotClient bot)
         {
-            List<Ship> shipList = vesselManager.ships.FindAll(ship => ship.ShipName.Contains(message.Text.ToUpper()));
+            List<Ship> shipList = vesselManager.ships.FindAll(ship => ship.ShipName.Contains(update.Message.Text.ToUpper()));
 
             if (shipList.Count != 0)
             {
                 if (shipList.Count < 2)
                 {
                     _logger.LogInformation("Match found.");
-                    await _botClient.SendTextMessageAsync(message.Chat.Id, "✅ Match found! ✅");
-                    var messageToPin = await _botClient.SendTextMessageAsync(message.Chat.Id, shipList[0].ShipName);
-                    await _botClient.PinChatMessageAsync(message.Chat.Id, messageToPin.MessageId);
-                    return await _botClient.SendTextMessageAsync(message.Chat.Id, "🔄 Please enter /refresh to recieve a schedule. 📅");
+                    await _botClient.SendTextMessageAsync(chat, "✅ Match found! ✅");
+                    var messageToPin = await _botClient.SendTextMessageAsync(chat, shipList[0].ShipName);
+                    await _botClient.PinChatMessageAsync(chat, messageToPin.MessageId);
+                    return await _botClient.SendTextMessageAsync(chat, "🔄 Please enter /refresh to recieve a schedule. 📅");
                 }
                 _logger.LogInformation("Found more then one match.");
-                return await _botClient.SendTextMessageAsync(message.Chat.Id, "⚠ Found more then one match, be more specific. ⚠");
+                return await _botClient.SendTextMessageAsync(chat, "⚠ Found more then one match, be more specific. ⚠");
             }
             _logger.LogInformation("Can not find a vessel with a matching name.");
-            return await _botClient.SendTextMessageAsync(message.Chat.Id, "❌ Can not find a vessel with a matching name. ❌");
+            return await _botClient.SendTextMessageAsync(chat, "❌ Can not find a vessel with a matching name. ❌");
         }
     }
 
