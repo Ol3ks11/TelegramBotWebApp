@@ -62,6 +62,7 @@ public class HandleUpdateService
 
         var action = update.Message.Text!.Split(' ')[0] switch
         {
+            "/start"   => Setup(_botClient),
             "/setup"   => Setup(_botClient),
             "/refresh" => Refresh(_botClient),
             _          => CheckIfNameLegit(_botClient)
