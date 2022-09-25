@@ -5,7 +5,7 @@ using Telegram.Bot.Examples.WebHook.Services;
 var builder = WebApplication.CreateBuilder(args);
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
 builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
+builder.Logging.AddAzureWebAppDiagnostics();
 builder.Services.AddHostedService<ConfigureWebhook>();
 builder.Services.AddHttpClient("tgwebhook")
     .AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(botConfig.BotToken, httpClient));
