@@ -50,7 +50,7 @@ namespace TelegramBotWebApp.Services.Resources
             StringBuilder builder = new();
             builder.AppendLine("Schedule for <b>" + ships[shipIndex].ShipName + "</b>:");
             builder.AppendLine();
-            for(int i= ships[shipIndex].Ports.Count;i>0;i--)
+            for(int i= ships[shipIndex].Ports.Count-1;i>=0;i--)
             {
                 builder.AppendLine("Port call:  <b>" + ships[shipIndex].Ports[i].port.ToUpper() + "</b>");
                 builder.AppendLine("Terminal: " + ships[shipIndex].Ports[i].terminal);
