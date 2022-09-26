@@ -106,7 +106,7 @@ public class HandleUpdateService
 
             if (shipList.Count != 0)
             {
-                if (shipList.Count < 2)
+                if (shipList.Count < 3)
                 {
                     _logger.LogInformation("Match found.");
                     await _botClient.SendTextMessageAsync(chat, "✅ Match found! ✅");
