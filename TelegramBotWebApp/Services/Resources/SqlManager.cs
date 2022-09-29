@@ -18,7 +18,7 @@ namespace TelegramBotWebApp.Services.Resources
         {
             sqlConnectstring = @"Server=tcp:sqlserverforbot.database.windows.net,1433;"
                               +@"Initial Catalog=telegram-bot-sql-server;Persist Security Info=False;"
-                              +@"User ID=myadmin;Password={Bobbas47};MultipleActiveResultSets=False;"
+                              +@"User ID=myadmin;Password=Bobbas47;MultipleActiveResultSets=False;"
                               +@"Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
             sqlConnection.ConnectionString = sqlConnectstring;
         }
