@@ -75,7 +75,7 @@ public class HandleUpdateService
         async Task<Message> Setup(ITelegramBotClient bot)
         {
             await bot.UnpinAllChatMessages(chat);
-            return await bot.SendTextMessageAsync(chat, "Please enter Vessel name.");
+            return await bot.SendTextMessageAsync(chat, "🛳 Please enter Vessel name. 🛳");
         }
 
         async Task<Message> Refresh(ITelegramBotClient bot)
