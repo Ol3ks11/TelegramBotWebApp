@@ -50,15 +50,15 @@ namespace TelegramBotWebApp.Services.Resources
         public Port GetPortFromDbByName(string portName)
         {
             Connect();
-            SqlCommand selectCmd = new($"SELECT * FROM PortsTable WHERE PortName LIKE '%{portName}%'");
+            SqlCommand selectCmd = new($"SELECT * FROM PortsTable WHERE PortName = '{portName}'");
             selectCmd.Connection = sqlConnection;
             SqlDataAdapter sqlAdapter = new SqlDataAdapter(selectCmd);
             Port _port = new();
             DataTable table = new();
             sqlAdapter.Fill(table);
             _port.locationName = table.Rows[0][1].ToString();
-            _port.countryName = table.Rows[0][2].ToString();
-            _port.emoji = table.Rows[0][3].ToString();
+            _port.countryName  = table.Rows[0][2].ToString();
+            _port.emoji        = table.Rows[0][3].ToString();
             Disconnect();
             return _port;
         }
