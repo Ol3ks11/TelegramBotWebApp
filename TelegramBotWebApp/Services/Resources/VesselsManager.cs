@@ -16,14 +16,15 @@ namespace TelegramBotWebApp.Services.Resources
             ship = temp;
 
             SqlManager sqlManager = new();
-            foreach(var port in ship.Ports)
+            for (int i=0;i<ship.Ports.Count;i++)
             {
-                Port checkedPort = sqlManager.GetPortFromDbByName(port.portName);
-                if (port.portName == checkedPort.locationName)
+                Port checkedPort = sqlManager.GetPortFromDbByName(ship.Ports[i].portName);
+                if (ship.Ports[i].portName == checkedPort.locationName)
                 {
-                    port.countryName = checkedPort.countryName;
+                    ship.Ports[i] = checkedPort;
                 }
-            }
+            }    
+            
             return ship;
         }
 
