@@ -58,6 +58,7 @@ namespace TelegramBotWebApp.Services.Resources
             sqlAdapter.Fill(table);
             _port.locationName = table.Rows[0][1].ToString();
             _port.countryName = table.Rows[0][2].ToString();
+            _port.emoji = table.Rows[0][3].ToString();
             Disconnect();
             return _port;
         }

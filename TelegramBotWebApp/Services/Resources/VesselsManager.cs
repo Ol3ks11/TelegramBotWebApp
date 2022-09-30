@@ -64,7 +64,7 @@ namespace TelegramBotWebApp.Services.Resources
 
             for(int i= ship.Ports.Count-1;i>=0;i--)
             {
-                string portEmoji = sqlManager.GetEmoji(ship.Ports[i].countryName);
+                string portEmoji = ship.Ports[i].emoji;
                 string portName  = ship.Ports[i].portName.ToUpper();
                 string termName  = ship.Ports[i].terminal;
                 string arrival   = ship.Ports[i].arrival.ToString("dd-MM-yyyy HH:mm");

@@ -24,5 +24,7 @@ namespace TelegramBotWebApp.Services.Resources
 
         [JsonProperty("departure")]
         public DateTime departure { get; set; }
+
+        public string emoji { get; set; }
     }
 }
