@@ -57,7 +57,6 @@ namespace TelegramBotWebApp.Services.Resources
 
         public List<string> BuildSchedule(Ship ship)
         {
-            SqlManager sqlManager = new();
             StringBuilder builder = new();
             List<string> result = new();
             builder.AppendLine($"Schedule for <b>{ship.ShipName}</b>:");
