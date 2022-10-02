@@ -165,12 +165,14 @@ public class HandleUpdateService
         async Task<Message> SetupShip(ITelegramBotClient bot)
         {
             sqlManager.RemoveShip(update);
+            user = sqlManager.GetUser(update);
             return await bot.SendTextMessageAsync(chat, "🛳 Please enter vessel`s name. 🛳");
         }
 
         async Task<Message> SetupPort(ITelegramBotClient bot)
         {
             sqlManager.RemovePort(update);
+            user = sqlManager.GetUser(update);
             return await bot.SendTextMessageAsync(chat, "🏭 Please enter port`s name. 🏭");
         }
 
@@ -236,17 +238,19 @@ public class HandleUpdateService
                     await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.ShipName} 🛳");
 
                     sqlManager.AddShip(update, ship);
+                    user = sqlManager.GetUser(update);
                     return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
                 }
             }
             if (user.PortTarget == null && update.Message.Text!.Split(' ')[0].ToUpper() == "PORT")
             {
-                Port port = sqlManager.GetPortFromDbByName(update.Message.Text);
+                Port port = sqlManager.GetPortFromDbByName(update.Message.Text!.Split(' ')[1]);
                 if (port != null)
                 {
                     await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
                     await _botClient.SendTextMessageAsync(chat.Id, $"🏭 {port.emoji}{port.portName}{port.emoji} 🏭");
                     sqlManager.AddPort(update, port);
+                    user = sqlManager.GetUser(update);
                     return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_port to recieve a schedule. 📅");
                 }
             }
