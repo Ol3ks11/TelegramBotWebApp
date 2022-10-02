@@ -96,7 +96,7 @@ namespace TelegramBotWebApp.Services.Resources
             string name = $"{update.Message.From.FirstName} {update.Message.From.LastName}";
 
             Connect();
-            SqlCommand selectCmd = new($"SELECT TelegramID, Name, VesselLock, PortLock, PrintAscending" +
+            SqlCommand selectCmd = new($"SELECT TelegramID, Name, VesselLock, PortLock, PrintAscending " +
                                        $"FROM Users " +
                                        $"WHERE TelegramID={userId}");
             selectCmd.Connection = sqlConnection;
