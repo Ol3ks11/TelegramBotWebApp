@@ -320,6 +320,7 @@ namespace TelegramBotWebApp.Services.Resources
 
             Ship temp =  JsonConvert.DeserializeObject<Ship>(stringMaerskResponse);
 
+            Connect();
             foreach (var port in temp.Ports)
             {
                 string query = $"UPDATE PortsTable SET GeoID = {port.GeoId} WHERE PortName = @location";
@@ -331,6 +332,7 @@ namespace TelegramBotWebApp.Services.Resources
                 insertCmd.Connection = sqlConnection;
                 insertCmd.ExecuteNonQuery();
             }
+            Disconnect();
         }
         #endregion
     }
