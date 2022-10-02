@@ -1,20 +1,32 @@
 ﻿using Newtonsoft.Json;
+using System.Data;
 using System.Text;
 
 namespace TelegramBotWebApp.Services.Resources
 {
     public class VesselsManager
     {
-        [JsonProperty("vessels")]
-        public List<Ship> ships { get; set; }
 
-        public void UpdateShipPorts(int shipsId)
+        public Ship UpdateShipPorts(Ship ship)
         {
             Ship temp = new();
-            temp = JsonConvert.DeserializeObject<Ship>(GetPortsJson(ships[shipsId]).Result);
-            temp.ShipName = ships[shipsId].ShipName;
-            temp.ShipCode = ships[shipsId].ShipCode;
-            ships[shipsId] = temp;
+            temp = JsonConvert.DeserializeObject<Ship>(GetPortsJson(ship).Result);
+            temp.ShipName = ship.ShipName;
+            temp.ShipCode = ship.ShipCode;
+            ship = temp;
+
+            SqlManager sqlManager = new();
+            for (int i = 0; i < ship.Ports.Count; i++)
+            {
+                Port checkedPort = sqlManager.GetPortFromDbByName(ship.Ports[i].portName);
+                if (ship.Ports[i].portName == checkedPort.locationName)
+                {
+                    ship.Ports[i].locationName = checkedPort.locationName;
+                    ship.Ports[i].emoji = checkedPort.emoji;
+                    ship.Ports[i].countryName = checkedPort.countryName;
+                }
+            }
+            return ship;
         }
 
         private async Task<string> GetPortsJson(Ship ship)
@@ -24,7 +36,7 @@ namespace TelegramBotWebApp.Services.Resources
 
             HttpRequestMessage requestForPortsList = new();
             string getPortsURL = "https://api.maerskline.com/maeu/schedules/vessel?vesselCode="
-                +ship.ShipCode+"&fromDate="+ fromDateStr + "&toDate="+ toDateStr;
+                +ship.ShipCode.Trim()+"&fromDate="+ fromDateStr + "&toDate="+ toDateStr;
             requestForPortsList.RequestUri = new Uri(getPortsURL);
             HttpClient client = new();
             try
@@ -44,38 +56,35 @@ namespace TelegramBotWebApp.Services.Resources
             return null;
         }
 
-        public string BuildSchedule(int shipIndex)
+        public List<string> BuildSchedule(Ship ship)
         {
-            UpdateShipPorts(shipIndex);
             StringBuilder builder = new();
-            builder.AppendLine("Schedule for <b>" + ships[shipIndex].ShipName + "</b>:");
+            List<string> result = new();
+            builder.AppendLine($"Schedule for <b>{ship.ShipName}</b>:");
             builder.AppendLine();
-            for(int i= ships[shipIndex].Ports.Count-1;i>=0;i--)
+
+            for(int i= ship.Ports.Count-1;i>=0;i--)
             {
-                builder.AppendLine("Port call:  <b>" + ships[shipIndex].Ports[i].port.ToUpper() + "</b>");
-                builder.AppendLine("Terminal: " + ships[shipIndex].Ports[i].terminal);
-                builder.AppendLine("ARR: " + ships[shipIndex].Ports[i].arrival.ToString("dd-MM-yyyy HH:mm"));
-                builder.AppendLine("DEP: " + ships[shipIndex].Ports[i].departure.ToString("dd-MM-yyyy HH:mm"));
+                string portEmoji = ship.Ports[i].emoji;
+                string portName  = ship.Ports[i].portName.ToUpper();
+                string termName  = ship.Ports[i].terminal;
+                string arrival   = ship.Ports[i].arrival.ToString("dd-MM-yyyy HH:mm");
+                string departure = ship.Ports[i].departure.ToString("dd-MM-yyyy HH:mm");
+
+                builder.AppendLine($"<code>Port call</code>: {portEmoji} <b>{portName}</b>");
+                builder.AppendLine($"<code>Terminal:</code> <i>{termName}</i>");
+                builder.AppendLine($"<code>ARR:</code> {arrival}");
+                builder.AppendLine($"<code>DEP:</code> {departure}");
                 builder.AppendLine();
-                if (builder.Length > 3500)
+
+                if (builder.Length > 1800)
                 {
-                    return builder.ToString();
+                    result.Add(builder.ToString());
+                    builder.Clear();
                 }
             }
-
-            /*foreach (var port in ships[shipIndex].Ports)
-            {
-                builder.AppendLine("Port call: <b>" + port.port + "</b>");
-                builder.AppendLine("Terminal: " + port.terminal);
-                builder.AppendLine("Arrival: " + port.arrival.ToString("dd.MM.yyyy HH:mm"));
-                builder.AppendLine("Departure: " + port.departure.ToString("dd.MM.yyyy HH:mm"));
-                builder.AppendLine();
-                if (builder.Length > 3500)
-                {
-                    return builder.ToString();
-                }
-            }*/
-            return builder.ToString();
+            result.Add(builder.ToString());
+            return result;
         }
     }
 }

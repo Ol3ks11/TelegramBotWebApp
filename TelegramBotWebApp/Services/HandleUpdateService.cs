@@ -75,7 +75,7 @@ public class HandleUpdateService
         async Task<Message> Setup(ITelegramBotClient bot)
         {
             await bot.UnpinAllChatMessages(chat);
-            return await bot.SendTextMessageAsync(chat, "Please enter Vessel name.");
+            return await bot.SendTextMessageAsync(chat, "🛳 Please enter Vessel name. 🛳");
         }
 
         async Task<Message> Refresh(ITelegramBotClient bot)
@@ -93,32 +93,32 @@ public class HandleUpdateService
 
         async Task<Message> SendSchedule()
         {
-            var ship = vesselManager.ships.Find(ship => ship.ShipName == chat.PinnedMessage.Text);
-            int shipIndex = vesselManager.ships.IndexOf(ship);
-            vesselManager.UpdateShipPorts(shipIndex);
-            _logger.LogInformation("Sending schedule for {ship.ShipName}", ship.ShipName);
-            return await _botClient.SendTextMessageAsync(chat, vesselManager.BuildSchedule(shipIndex),ParseMode.Html);
+            SqlManager sqlManager = new();
+            Ship ship = sqlManager.GetShipFromDbByName(chat.PinnedMessage.Text);
+            ship = vesselManager.UpdateShipPorts(ship);
+            List<string> schedule = vesselManager.BuildSchedule(ship);
+            for (int i=0;i<schedule.Count-1;i++)
+            {
+                await _botClient.SendTextMessageAsync(chat.Id, schedule[i], ParseMode.Html);
+            }
+            return await _botClient.SendTextMessageAsync(chat.Id, schedule[schedule.Count - 1], ParseMode.Html);
         }
 
         async Task<Message> CheckIfNameLegit(ITelegramBotClient bot)
         {
-            List<Ship> shipList = vesselManager.ships.FindAll(ship => ship.ShipName.Contains(update.Message.Text.ToUpper()));
+            SqlManager sqlManager = new();
+            Ship ship = sqlManager.GetShipFromDbByName(update.Message.Text);
 
-            if (shipList.Count != 0)
+            if (ship.ShipName != null)
             {
-                if (shipList.Count < 3)
-                {
-                    _logger.LogInformation("Match found.");
-                    await _botClient.SendTextMessageAsync(chat, "✅ Match found! ✅");
-                    var messageToPin = await _botClient.SendTextMessageAsync(chat, shipList[0].ShipName);
-                    await _botClient.PinChatMessageAsync(chat, messageToPin.MessageId);
-                    return await _botClient.SendTextMessageAsync(chat, "🔄 Please enter /refresh to recieve a schedule. 📅");
-                }
-                _logger.LogInformation("Found more then one match.");
-                return await _botClient.SendTextMessageAsync(chat, "⚠ Found more then one match, be more specific. ⚠");
+                await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
+                var messageToPin = await _botClient.SendTextMessageAsync(chat.Id, ship.ShipName);
+                await _botClient.PinChatMessageAsync(chat, messageToPin.MessageId);
+                _logger.LogInformation("Match found.");
+                return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh to recieve a schedule. 📅");
             }
             _logger.LogInformation("Can not find a vessel with a matching name.");
-            return await _botClient.SendTextMessageAsync(chat, "❌ Can not find a vessel with a matching name. ❌");
+            return await _botClient.SendTextMessageAsync(chat.Id, "❌ Can not find a vessel with a matching name. ❌");
         }
     }
 
