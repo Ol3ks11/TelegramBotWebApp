@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic;
+using Newtonsoft.Json;
 using System.Data;
 using System.Data.SqlClient;
 using Telegram.Bot.Types;
@@ -299,6 +300,38 @@ namespace TelegramBotWebApp.Services.Resources
                 insertCmd.ExecuteNonQuery();
             }
         }*/
+
+        public async Task AddPortGeoID()
+        {
+            string stringMaerskResponse = null;
+            HttpRequestMessage requestForPortsList = new();
+            string getPortsURL = "https://api.maerskline.com/maeu/schedules/port/active";
+            requestForPortsList.RequestUri = new Uri(getPortsURL);
+            HttpClient client = new();
+            try
+            {
+                var maerskResponse = await client.SendAsync(requestForPortsList);
+                stringMaerskResponse = await maerskResponse.Content.ReadAsStringAsync();
+            }
+            catch (Exception e)
+            { Console.WriteLine(e.Message); }
+            finally
+            { client.Dispose(); }
+
+            Ship temp =  JsonConvert.DeserializeObject<Ship>(stringMaerskResponse);
+
+            foreach (var port in temp.Ports)
+            {
+                string query = $"UPDATE PortsTable SET GeoID = {port.GeoId} WHERE PortName = @location";
+                SqlCommand insertCmd = new();
+                insertCmd.CommandType = CommandType.Text;
+                insertCmd.CommandText = query;
+                insertCmd.Parameters.Add("@location", SqlDbType.NVarChar);
+                insertCmd.Parameters["@location"].Value = port.locationName;
+                insertCmd.Connection = sqlConnection;
+                insertCmd.ExecuteNonQuery();
+            }
+        }
         #endregion
     }
 }

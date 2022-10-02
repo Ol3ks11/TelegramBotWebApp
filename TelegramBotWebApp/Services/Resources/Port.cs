@@ -13,6 +13,9 @@ namespace TelegramBotWebApp.Services.Resources
         [JsonProperty("port")]
         public string portName { get; set; }
 
+        [JsonProperty("locationName")]
+        public string locationName { get; set; }
+
         [JsonProperty("terminal")]
         public string terminal { get; set; }
 
