@@ -58,8 +58,7 @@ public class HandleUpdateService
         {
             "/start"            => Start(_botClient),
             "/status"           => GetStatus(_botClient),
-
-            "/update_port_geo"  => AddGeoIds(_botClient),
+            "/help"             => GetHelp(_botClient),
 
             "/setup_ship"       => SetupShip(_botClient),
             "/setup_port"       => SetupPort(_botClient),
@@ -74,12 +73,6 @@ public class HandleUpdateService
         Message sentMessage = await action;
         ToLogSentMsg(sentMessage);
         sqlManager.AddToRequestsCount(update);
-
-        async Task<Message> AddGeoIds(ITelegramBotClient bot)
-        {
-            await sqlManager.AddPortGeoID();
-            return await bot.SendTextMessageAsync(chat, "geoIDs added");
-        }
 
         async Task<Message> Start(ITelegramBotClient bot)
         {
@@ -97,35 +90,59 @@ public class HandleUpdateService
             {
                 builder.AppendLine($"🛳✅ Your target vessel is - {user.VesselTarget.ShipName}");
                 builder.AppendLine($"🛳🔄 Enter /refresh_ship to get ship schedule.");
+                builder.AppendLine($"To re-set target vessel, just enter another name.");
                 builder.AppendLine();
             }
             else
             {
-                builder.AppendLine($"🛳❌Your target vessel is missing, please enter /setup_ship to set it up.");
+                builder.AppendLine($"🛳❌Your target vessel is missing.❌🛳");
+                builder.AppendLine("Please enter vessel name to set it up.");
                 builder.AppendLine();
             }
             if (user.PortTarget != null)
             {
                 builder.AppendLine($"🏭✅ Your target port is - {user.PortTarget.portName}");
                 builder.AppendLine($"🏭🔄 Enter /refresh_port to get port schedule.");
+                builder.AppendLine($"To re-set target port, enter port name with PORT keyword at start.");
                 builder.AppendLine();
             }
             else
             {
-                builder.AppendLine($"🏭❌Your target port is missing, please enter /setup_port to set it up.");
+                builder.AppendLine($"🏭❌ Your target port is missing. ❌🏭");
+                builder.AppendLine("Please enter port name with PORT keyword to set it up.");
                 builder.AppendLine();
             }
             if (user.PrintAscending == true)
             {
                 builder.AppendLine($"Schedule will be printed in ascending order (from top to bottom).");
-                builder.AppendLine($"Enter /order_descending to change to descending order (from bottom to top).");
+                builder.AppendLine($"/order_descending to change order to descending (from bottom to top).");
 
             }
             else if (user.PrintAscending == false)
             {
                 builder.AppendLine($"Schedule will be printed in descending order (from bottom to top).");
-                builder.AppendLine($"Enter /order_ascending to change to ascending order (from top to bottom).");
+                builder.AppendLine($"/order_ascending to change order to ascending (from top to bottom).");
             }
+            return await bot.SendTextMessageAsync(chat, builder.ToString());
+        }
+
+        async Task<Message> GetHelp(ITelegramBotClient bot)
+        {
+            StringBuilder builder = new();
+            builder.AppendLine("Enter /status - to get status of your target vessel and port.");
+            builder.AppendLine();
+            builder.AppendLine($"🛳🔄 Enter /refresh_ship to get ship schedule.");
+            builder.AppendLine($"To re-set target vessel, just enter another name.");
+            builder.AppendLine();
+            builder.AppendLine($"🏭🔄 Enter /refresh_port to get port schedule.");
+            builder.AppendLine($"To re-set target port, enter port name with PORT keyword at start.");
+            builder.AppendLine($"For example: \"PORT Manila\", or \"PORT Aarhus\"");
+            builder.AppendLine();
+            builder.AppendLine($"Enter /order_descending to change print order to descending.");
+            builder.AppendLine($"Descending - Nearest date is last.");
+            builder.AppendLine();
+            builder.AppendLine($"Enter /order_ascending to change print order to descending.");
+            builder.AppendLine($"Ascending - Nearest date is first.");
             return await bot.SendTextMessageAsync(chat, builder.ToString());
         }
 
@@ -222,7 +239,7 @@ public class HandleUpdateService
                     return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
                 }
             }
-            if (user.PortTarget == null)
+            if (user.PortTarget == null && update.Message.Text!.Split(' ')[0].ToUpper() == "PORT")
             {
                 Port port = sqlManager.GetPortFromDbByName(update.Message.Text);
                 if (port != null)

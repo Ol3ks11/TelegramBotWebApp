@@ -299,7 +299,7 @@ namespace TelegramBotWebApp.Services.Resources
                 insertCmd.Connection = sqlConnection;
                 insertCmd.ExecuteNonQuery();
             }
-        }*/
+        }
 
         public async Task AddPortGeoID()
         {
@@ -323,17 +323,17 @@ namespace TelegramBotWebApp.Services.Resources
             Connect();
             foreach (var port in temp.Ports)
             {
-                string query = $"UPDATE PortsTable SET GeoID = {port.GeoId} WHERE PortName = @location";
+                string query = $"UPDATE PortsTable SET GeoID = {port.GeoId} WHERE PortName = {port.locationName}";
                 SqlCommand insertCmd = new();
                 insertCmd.CommandType = CommandType.Text;
                 insertCmd.CommandText = query;
-                insertCmd.Parameters.Add("@location", SqlDbType.NVarChar);
-                insertCmd.Parameters["@location"].Value = port.locationName;
+                //insertCmd.Parameters.Add("@location", SqlDbType.NVarChar);
+                //insertCmd.Parameters["@location"].Value = port.locationName;
                 insertCmd.Connection = sqlConnection;
                 insertCmd.ExecuteNonQuery();
             }
             Disconnect();
-        }
+        }*/
         #endregion
     }
 }
