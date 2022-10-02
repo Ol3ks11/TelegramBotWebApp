@@ -38,7 +38,7 @@ namespace TelegramBotWebApp.Services.Resources
             Ship _ship = new();
             DataTable table = new();
             adapter.Fill(table);
-            if (table.Rows[0][0] != null)
+            if (table.Rows.Count != 0)
             {
                 _ship.ShipName = table.Rows[0][1].ToString();
                 _ship.ShipCode = table.Rows[0][2].ToString();
@@ -60,7 +60,7 @@ namespace TelegramBotWebApp.Services.Resources
             Port _port = new();
             DataTable table = new();
             sqlAdapter.Fill(table);
-            if (table.Rows[0][0] != null)
+            if (table.Rows.Count != 0)
             {
                 _port.portName = table.Rows[0][1].ToString();
                 _port.countryName = table.Rows[0][2].ToString();
@@ -83,7 +83,7 @@ namespace TelegramBotWebApp.Services.Resources
             DataTable table = new();
             adapter.Fill(table);
             Disconnect();
-            if (table.Rows[0][0].ToString() == null)
+            if (table.Rows.Count == 0)
             {
                 return "";
             }
@@ -102,8 +102,7 @@ namespace TelegramBotWebApp.Services.Resources
             DataTable table = new();
             adapter.Fill(table);
             Disconnect();
-
-            if (table.Rows[0][0].ToString() == null)
+            if (table.Rows.Count == 0)
             {
                 string query = $"INSERT INTO Users (TelegramID, Name, Requests, PrintAscending)" 
                              + $"VALUES (@userId, @name, @requests, @printAsc);";
