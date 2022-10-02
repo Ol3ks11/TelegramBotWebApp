@@ -150,14 +150,12 @@ namespace TelegramBotWebApp.Services.Resources
         public void RemoveShip(Update update)
         {
             int userId = (int)update.Message.From.Id;
-            string query = $"UPDATE Users SET VesselLock = @null WHERE TelegramID=@userID;";
+            string query = $"UPDATE Users SET VesselLock = NULL WHERE TelegramID=@userID;";
             SqlCommand insertCmd = new();
             insertCmd.CommandType = CommandType.Text;
             insertCmd.CommandText = query;
             insertCmd.Parameters.Add("@userID", SqlDbType.NVarChar);
-            insertCmd.Parameters.Add("@null", SqlDbType.NVarChar);
             insertCmd.Parameters["@userID"].Value = userId;
-            insertCmd.Parameters["@null"].Value = null;
             insertCmd.Connection = sqlConnection;
             Connect();
             insertCmd.ExecuteNonQuery();
@@ -184,14 +182,12 @@ namespace TelegramBotWebApp.Services.Resources
         public void RemovePort(Update update)
         {
             int userId = (int)update.Message.From.Id;
-            string query = $"UPDATE Users SET PortLock = @null WHERE TelegramID=@userID;";
+            string query = $"UPDATE Users SET PortLock = NULL WHERE TelegramID=@userID;";
             SqlCommand insertCmd = new();
             insertCmd.CommandType = CommandType.Text;
             insertCmd.CommandText = query;
             insertCmd.Parameters.Add("@userID", SqlDbType.Int);
-            insertCmd.Parameters.Add("@null", SqlDbType.NVarChar);
             insertCmd.Parameters["@userID"].Value = userId;
-            insertCmd.Parameters["@null"].Value = null;
             insertCmd.Connection = sqlConnection;
             Connect();
             insertCmd.ExecuteNonQuery();

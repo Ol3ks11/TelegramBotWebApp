@@ -88,7 +88,7 @@ public class HandleUpdateService
             StringBuilder builder = new();
             if (user.VesselTarget != null)
             {
-                builder.AppendLine($"🛳✅ Your target vessel is - {user.VesselTarget}");
+                builder.AppendLine($"🛳✅ Your target vessel is - {user.VesselTarget.ShipName}");
                 builder.AppendLine($"🛳🔄 Enter /refresh_ship to get ship schedule.");
                 builder.AppendLine();
             }
@@ -99,7 +99,7 @@ public class HandleUpdateService
             }
             if (user.PortTarget != null)
             {
-                builder.AppendLine($"🏭✅ Your target port is - {user.PortTarget}");
+                builder.AppendLine($"🏭✅ Your target port is - {user.PortTarget.portName}");
                 builder.AppendLine($"🏭🔄 Enter /refresh_port to get port schedule.");
                 builder.AppendLine();
             }
