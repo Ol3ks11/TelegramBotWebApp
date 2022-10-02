@@ -4,13 +4,10 @@ namespace TelegramBotWebApp.Services.Resources
 {
     public class Port
     {
-        [JsonProperty("countryName")]
-        public string countryName { get; set; }
+        [JsonProperty("vessels")]
+        public List<Ship> Vessels { get; set; }
 
-        [JsonProperty("locationName")]
-        public string locationName { get; set; }
-
-        [JsonProperty("geoId")]
+        [JsonProperty("portGeoId")]
         public string GeoId { get; set; }
 
         [JsonProperty("port")]
@@ -26,5 +23,6 @@ namespace TelegramBotWebApp.Services.Resources
         public DateTime departure { get; set; }
 
         public string emoji { get; set; }
+        public string countryName { get; set; }
     }
 }

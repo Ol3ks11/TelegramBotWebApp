@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.VisualBasic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace TelegramBotWebApp.Services.Resources
 {
@@ -26,7 +24,6 @@ namespace TelegramBotWebApp.Services.Resources
         {
             sqlConnection.Open();
         }
-
         private void Disconnect()
         {
             sqlConnection.Close();
@@ -41,8 +38,15 @@ namespace TelegramBotWebApp.Services.Resources
             Ship _ship = new();
             DataTable table = new();
             adapter.Fill(table);
-            _ship.ShipName = table.Rows[0][1].ToString();
-            _ship.ShipCode = table.Rows[0][2].ToString();
+            if (table.Rows[0][0] != null)
+            {
+                _ship.ShipName = table.Rows[0][1].ToString();
+                _ship.ShipCode = table.Rows[0][2].ToString();
+            }
+            else
+            {
+                _ship = null;
+            }
             Disconnect();
             return _ship;
         }
@@ -56,9 +60,16 @@ namespace TelegramBotWebApp.Services.Resources
             Port _port = new();
             DataTable table = new();
             sqlAdapter.Fill(table);
-            _port.locationName = table.Rows[0][1].ToString();
-            _port.countryName  = table.Rows[0][2].ToString();
-            _port.emoji        = table.Rows[0][3].ToString();
+            if (table.Rows[0][0] != null)
+            {
+                _port.portName = table.Rows[0][1].ToString();
+                _port.countryName = table.Rows[0][2].ToString();
+                _port.emoji = table.Rows[0][3].ToString();
+            }
+            else
+            {
+                _port = null;
+            }
             Disconnect();
             return _port;
         }
@@ -77,7 +88,162 @@ namespace TelegramBotWebApp.Services.Resources
                 return "";
             }
             return table.Rows[0][0].ToString();
+        }
 
+        public User GetUser(Update update)
+        {
+            int userId = (int)update.Message.From.Id;
+            string name = $"{update.Message.From.FirstName} {update.Message.From.LastName}";
+
+            Connect();
+            SqlCommand selectCmd = new($"SELECT COUNT (*) FROM Users WHERE TelegramID={userId}");
+            selectCmd.Connection = sqlConnection;
+            SqlDataAdapter adapter = new(selectCmd);
+            DataTable table = new();
+            adapter.Fill(table);
+            Disconnect();
+
+            if (table.Rows[0][0].ToString() == null)
+            {
+                string query = $"INSERT INTO Users (TelegramID, Name, Requests, PrintAscending)" 
+                             + $"VALUES (@userId, @name, @requests, @printAsc);";
+                SqlCommand insertCmd = new();
+                insertCmd.CommandType = CommandType.Text;
+                insertCmd.CommandText = query;
+                insertCmd.Parameters.Add("@userId", SqlDbType.Int);
+                insertCmd.Parameters.Add("@name", SqlDbType.NVarChar);
+                insertCmd.Parameters.Add("@requests", SqlDbType.Int);
+                insertCmd.Parameters.Add("@printAsc", SqlDbType.Bit);
+                insertCmd.Parameters["@userId"].Value = userId;
+                insertCmd.Parameters["@name"].Value = name;
+                insertCmd.Parameters["@requests"].Value = 0;
+                insertCmd.Parameters["@printAsc"].Value = 1;
+                insertCmd.Connection = sqlConnection;
+                Connect();
+                insertCmd.ExecuteNonQuery();
+                Disconnect();
+
+                User user = new();
+                user.TelegramId = userId;
+                user.Name = name;
+                user.PrintAscending = true;
+                return user;
+            }
+            else
+            {
+                User user = new();
+                user.TelegramId = (int)table.Rows[0][1];
+                user.Name = table.Rows[0][2].ToString();
+                user.VesselTarget = GetShipFromDbByName(table.Rows[0][3].ToString());
+                user.PortTarget = GetPortFromDbByName(table.Rows[0][4].ToString());
+                if (table.Rows[0][4].ToString() == "1")
+                {
+                    user.PrintAscending = true;
+                }
+                else
+                {
+                    user.PrintAscending = false;
+                }
+                return user;
+            }
+        }
+
+        public void RemoveShip(Update update)
+        {
+            int userId = (int)update.Message.From.Id;
+            string query = $"UPDATE Users SET VesselLock = @null WHERE TelegramID=@userID;";
+            SqlCommand insertCmd = new();
+            insertCmd.CommandType = CommandType.Text;
+            insertCmd.CommandText = query;
+            insertCmd.Parameters.Add("@userID", SqlDbType.NVarChar);
+            insertCmd.Parameters.Add("@null", SqlDbType.NVarChar);
+            insertCmd.Parameters["@userID"].Value = userId;
+            insertCmd.Parameters["@null"].Value = null;
+            insertCmd.Connection = sqlConnection;
+            Connect();
+            insertCmd.ExecuteNonQuery();
+            Disconnect();
+        }
+
+        public void AddShip(Update update, Ship ship)
+        {
+            int userId = (int)update.Message.From.Id;
+            string query = $"UPDATE Users SET VesselLock = @shipname WHERE TelegramID=@userID;";
+            SqlCommand insertCmd = new();
+            insertCmd.CommandType = CommandType.Text;
+            insertCmd.CommandText = query;
+            insertCmd.Parameters.Add("@userID", SqlDbType.Int);
+            insertCmd.Parameters.Add("@shipname", SqlDbType.NVarChar); 
+            insertCmd.Parameters["@userID"].Value = userId;
+            insertCmd.Parameters["@shipname"].Value = ship.ShipName;
+            insertCmd.Connection = sqlConnection;
+            Connect();
+            insertCmd.ExecuteNonQuery();
+            Disconnect();
+        }
+
+        public void RemovePort(Update update)
+        {
+            int userId = (int)update.Message.From.Id;
+            string query = $"UPDATE Users SET PortLock = @null WHERE TelegramID=@userID;";
+            SqlCommand insertCmd = new();
+            insertCmd.CommandType = CommandType.Text;
+            insertCmd.CommandText = query;
+            insertCmd.Parameters.Add("@userID", SqlDbType.Int);
+            insertCmd.Parameters.Add("@null", SqlDbType.NVarChar);
+            insertCmd.Parameters["@userID"].Value = userId;
+            insertCmd.Parameters["@null"].Value = null;
+            insertCmd.Connection = sqlConnection;
+            Connect();
+            insertCmd.ExecuteNonQuery();
+            Disconnect();
+        }
+
+        public void AddPort(Update update, Port port)
+        {
+            int userId = (int)update.Message.From.Id;
+            string query = $"UPDATE Users SET PortLock = @portName WHERE TelegramID=@userID;";
+            SqlCommand insertCmd = new();
+            insertCmd.CommandType = CommandType.Text;
+            insertCmd.CommandText = query;
+            insertCmd.Parameters.Add("@userID", SqlDbType.Int);
+            insertCmd.Parameters.Add("@portName", SqlDbType.NVarChar);
+            insertCmd.Parameters["@userID"].Value = userId;
+            insertCmd.Parameters["@portName"].Value = port.portName;
+            insertCmd.Connection = sqlConnection;
+            Connect();
+            insertCmd.ExecuteNonQuery();
+            Disconnect();
+        }
+
+        public void AddToRequestsCount(Update update)
+        {
+            int userId = (int)update.Message.From.Id;
+            string query = $"UPDATE Users SET Requests = Requests + 1 WHERE TelegramID = @userID";
+            SqlCommand insertCmd = new();
+            insertCmd.CommandType = CommandType.Text;
+            insertCmd.CommandText = query;
+            insertCmd.Parameters.Add("@userID", SqlDbType.Int);
+            insertCmd.Parameters["@userID"].Value = userId;
+            insertCmd.Connection = sqlConnection;
+            Connect();
+            insertCmd.ExecuteNonQuery();
+            Disconnect();
+        }
+
+        public void ChangePrintAscending(Update update,int option)
+        {
+            int userId = (int)update.Message.From.Id;
+            string query = $"UPDATE Users SET PrintAscending = {option} WHERE TelegramID = @userID";
+            SqlCommand insertCmd = new();
+            insertCmd.CommandType = CommandType.Text;
+            insertCmd.CommandText = query;
+            insertCmd.Parameters.Add("@userID", SqlDbType.Int);
+            insertCmd.Parameters["@userID"].Value = userId;
+            insertCmd.Connection = sqlConnection;
+            Connect();
+            insertCmd.ExecuteNonQuery();
+            Disconnect();
         }
 
         #region Populate Tables

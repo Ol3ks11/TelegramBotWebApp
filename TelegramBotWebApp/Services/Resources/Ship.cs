@@ -4,13 +4,19 @@ namespace TelegramBotWebApp.Services.Resources
 {
     public class Ship
     {
-        [JsonProperty("name")]
+        [JsonProperty("vessel")]
         public string ShipName { get; set; }
 
-        [JsonProperty("code")]
+        [JsonProperty("vesselCode")]
         public string ShipCode { get; set; }
 
         [JsonProperty("ports")]
         public List<Port> Ports { get; set; }
+
+        [JsonProperty("arrival")]
+        public DateTime Arrival { get; set; }
+
+        [JsonProperty("departure")]
+        public DateTime Departure { get; set; }
     }
 }
