@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
+using Telegram.Bot.Types;
 
 namespace TelegramBotWebApp.Services.Resources
 {
@@ -104,59 +105,106 @@ namespace TelegramBotWebApp.Services.Resources
             return null;
         }
 
-        public List<string> BuildSchedule(Ship ship)
+        public List<string> BuildSchedule(Ship ship, User user)
         {
             StringBuilder builder = new();
             List<string> result = new();
             builder.AppendLine($"Schedule for <b>{ship.ShipName}</b>:");
             builder.AppendLine();
-
-            for(int i= ship.Ports.Count-1;i>=0;i--)
+            if (user.PrintAscending == true)
             {
-                string portEmoji = ship.Ports[i].emoji;
-                string portName  = ship.Ports[i].portName.ToUpper();
-                string termName  = ship.Ports[i].terminal;
-                string arrival   = ship.Ports[i].arrival.ToString("dd-MM-yyyy HH:mm");
-                string departure = ship.Ports[i].departure.ToString("dd-MM-yyyy HH:mm");
-
-                builder.AppendLine($"<code>Port call</code>: {portEmoji} <b>{portName}</b>");
-                builder.AppendLine($"<code>Terminal:</code> <i>{termName}</i>");
-                builder.AppendLine($"<code>ARR:</code> {arrival}");
-                builder.AppendLine($"<code>DEP:</code> {departure}");
-                builder.AppendLine();
-
-                if (builder.Length > 1800)
+                for (int i = 0; i < ship.Ports.Count - 1; i++)
                 {
-                    result.Add(builder.ToString());
-                    builder.Clear();
+                    string portEmoji = ship.Ports[i].emoji;
+                    string portName = ship.Ports[i].portName.ToUpper();
+                    string termName = ship.Ports[i].terminal;
+                    string arrival = ship.Ports[i].arrival.ToString("dd-MM-yyyy HH:mm");
+                    string departure = ship.Ports[i].departure.ToString("dd-MM-yyyy HH:mm");
+
+                    builder.AppendLine($"<code>Port call</code>: {portEmoji} <b>{portName}</b>");
+                    builder.AppendLine($"<code>Terminal:</code> <i>{termName}</i>");
+                    builder.AppendLine($"<code>ARR:</code> {arrival}");
+                    builder.AppendLine($"<code>DEP:</code> {departure}");
+                    builder.AppendLine();
+
+                    if (builder.Length > 1800)
+                    {
+                        result.Add(builder.ToString());
+                        builder.Clear();
+                    }
+                }
+            }
+            else
+            {
+                for (int i = ship.Ports.Count - 1; i >= 0; i--)
+                {
+                    string portEmoji = ship.Ports[i].emoji;
+                    string portName = ship.Ports[i].portName.ToUpper();
+                    string termName = ship.Ports[i].terminal;
+                    string arrival = ship.Ports[i].arrival.ToString("dd-MM-yyyy HH:mm");
+                    string departure = ship.Ports[i].departure.ToString("dd-MM-yyyy HH:mm");
+
+                    builder.AppendLine($"<code>Port call</code>: {portEmoji} <b>{portName}</b>");
+                    builder.AppendLine($"<code>Terminal:</code> <i>{termName}</i>");
+                    builder.AppendLine($"<code>ARR:</code> {arrival}");
+                    builder.AppendLine($"<code>DEP:</code> {departure}");
+                    builder.AppendLine();
+
+                    if (builder.Length > 1800)
+                    {
+                        result.Add(builder.ToString());
+                        builder.Clear();
+                    }
                 }
             }
             result.Add(builder.ToString());
             return result;
         }
 
-        public List<string> BuildSchedule(Port port)
+        public List<string> BuildSchedule(Port port, User user)
         {
             StringBuilder builder = new();
             List<string> result = new();
             builder.AppendLine($"Schedule for {port.emoji}<b>{port.portName}</b>:");
             builder.AppendLine();
-
-            for (int i = port.Vessels.Count - 1; i >= 0; i--)
+            if (user.PrintAscending == true)
             {
-                string vesselName = port.Vessels[i].ShipName.ToUpper();
-                string arrival = port.Vessels[i].Arrival.ToString("dd-MM-yyyy HH:mm");
-                string departure = port.Vessels[i].Departure.ToString("dd-MM-yyyy HH:mm");
-
-                builder.AppendLine($"<code>Vessel:</code>: <b>{vesselName}</b>");
-                builder.AppendLine($"<code>ARR:</code> {arrival}");
-                builder.AppendLine($"<code>DEP:</code> {departure}");
-                builder.AppendLine();
-
-                if (builder.Length > 1800)
+                for (int i = 0; i < port.Vessels.Count - 1; i++)
                 {
-                    result.Add(builder.ToString());
-                    builder.Clear();
+                    string vesselName = port.Vessels[i].ShipName.ToUpper();
+                    string arrival = port.Vessels[i].Arrival.ToString("dd-MM-yyyy HH:mm");
+                    string departure = port.Vessels[i].Departure.ToString("dd-MM-yyyy HH:mm");
+
+                    builder.AppendLine($"<code>Vessel:</code>: <b>{vesselName}</b>");
+                    builder.AppendLine($"<code>ARR:</code> {arrival}");
+                    builder.AppendLine($"<code>DEP:</code> {departure}");
+                    builder.AppendLine();
+
+                    if (builder.Length > 1800)
+                    {
+                        result.Add(builder.ToString());
+                        builder.Clear();
+                    }
+                }
+            }
+            else
+            {
+                for (int i = port.Vessels.Count - 1; i >= 0; i--)
+                {
+                    string vesselName = port.Vessels[i].ShipName.ToUpper();
+                    string arrival = port.Vessels[i].Arrival.ToString("dd-MM-yyyy HH:mm");
+                    string departure = port.Vessels[i].Departure.ToString("dd-MM-yyyy HH:mm");
+
+                    builder.AppendLine($"<code>Vessel:</code>: <b>{vesselName}</b>");
+                    builder.AppendLine($"<code>ARR:</code> {arrival}");
+                    builder.AppendLine($"<code>DEP:</code> {departure}");
+                    builder.AppendLine();
+
+                    if (builder.Length > 1800)
+                    {
+                        result.Add(builder.ToString());
+                        builder.Clear();
+                    }
                 }
             }
             result.Add(builder.ToString());

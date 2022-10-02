@@ -84,7 +84,6 @@ public class HandleUpdateService
 
         async Task<Message> GetStatus(ITelegramBotClient bot)
         {
-            user = sqlManager.GetUser(update);
             StringBuilder builder = new();
             if (user.VesselTarget != null)
             {
@@ -106,6 +105,7 @@ public class HandleUpdateService
             else
             {
                 builder.AppendLine($"🏭❌Your target port is missing, please enter /setup_port to set it up.");
+                builder.AppendLine();
             }
             if (user.PrintAscending == true)
             {
@@ -178,7 +178,7 @@ public class HandleUpdateService
             SqlManager sqlManager = new();
             Ship ship = user.VesselTarget;
             ship = vesselManager.UpdateShipPorts(ship);
-            List<string> schedule = vesselManager.BuildSchedule(ship);
+            List<string> schedule = vesselManager.BuildSchedule(ship,user);
             for (int i=0;i<schedule.Count-1;i++)
             {
                 await _botClient.SendTextMessageAsync(chat.Id, schedule[i], ParseMode.Html);
@@ -191,7 +191,7 @@ public class HandleUpdateService
             SqlManager sqlManager = new();
             Port port = user.PortTarget;
             port = vesselManager.UpdatePortShips(port);
-            List<string> schedule = vesselManager.BuildSchedule(port);
+            List<string> schedule = vesselManager.BuildSchedule(port,user);
             for (int i = 0; i < schedule.Count - 1; i++)
             {
                 await _botClient.SendTextMessageAsync(chat.Id, schedule[i], ParseMode.Html);

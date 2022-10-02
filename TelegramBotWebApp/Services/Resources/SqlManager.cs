@@ -96,7 +96,9 @@ namespace TelegramBotWebApp.Services.Resources
             string name = $"{update.Message.From.FirstName} {update.Message.From.LastName}";
 
             Connect();
-            SqlCommand selectCmd = new($"SELECT * FROM Users WHERE TelegramID={userId}");
+            SqlCommand selectCmd = new($"SELECT TelegramID, Name, VesselLock, PortLock, PrintAscending" +
+                                       $"FROM Users " +
+                                       $"WHERE TelegramID={userId}");
             selectCmd.Connection = sqlConnection;
             SqlDataAdapter adapter = new(selectCmd);
             DataTable table = new();
@@ -126,16 +128,18 @@ namespace TelegramBotWebApp.Services.Resources
                 user.TelegramId = userId;
                 user.Name = name;
                 user.PrintAscending = true;
+                user.PortTarget = null;
+                user.VesselTarget = null;
                 return user;
             }
             else
             {
                 User user = new();
                 user.TelegramId = (int)table.Rows[0][1];
-                user.Name = table.Rows[0][2].ToString();
-                user.VesselTarget = GetShipFromDbByName(table.Rows[0][3].ToString());
-                user.PortTarget = GetPortFromDbByName(table.Rows[0][4].ToString());
-                if (table.Rows[0][4].ToString() == "1")
+                user.Name = table.Rows[0][1].ToString();
+                user.VesselTarget = GetShipFromDbByName(table.Rows[0][2].ToString());
+                user.PortTarget = GetPortFromDbByName(table.Rows[0][3].ToString());
+                if (table.Rows[0][4].ToString() == "True")
                 {
                     user.PrintAscending = true;
                 }
