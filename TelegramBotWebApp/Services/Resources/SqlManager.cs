@@ -135,7 +135,7 @@ namespace TelegramBotWebApp.Services.Resources
             else
             {
                 User user = new();
-                user.TelegramId = (int)table.Rows[0][1];
+                user.TelegramId = (int)table.Rows[0][0];
                 user.Name = table.Rows[0][1].ToString();
                 user.VesselTarget = GetShipFromDbByName(table.Rows[0][2].ToString());
                 user.PortTarget = GetPortFromDbByName(table.Rows[0][3].ToString());
