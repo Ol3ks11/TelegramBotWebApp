@@ -96,7 +96,7 @@ namespace TelegramBotWebApp.Services.Resources
             string name = $"{update.Message.From.FirstName} {update.Message.From.LastName}";
 
             Connect();
-            SqlCommand selectCmd = new($"SELECT COUNT (*) FROM Users WHERE TelegramID={userId}");
+            SqlCommand selectCmd = new($"SELECT * FROM Users WHERE TelegramID={userId}");
             selectCmd.Connection = sqlConnection;
             SqlDataAdapter adapter = new(selectCmd);
             DataTable table = new();
