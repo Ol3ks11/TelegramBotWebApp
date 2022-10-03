@@ -78,7 +78,7 @@ namespace TelegramBotWebApp.Services.Resources
         private async Task<string> GetShipsJson(Port port)
         {
             string fromDateStr = DateOnly.FromDateTime(DateTime.Now).ToString("yyyy-MM-dd");
-            string toDateStr = DateOnly.FromDateTime(DateTime.Now.AddDays(3)).ToString("yyyy-MM-dd");
+            string toDateStr = DateOnly.FromDateTime(DateTime.Now.AddDays(14)).ToString("yyyy-MM-dd");
 
             HttpRequestMessage requestForPortsList = new();
             string getPortsURL = "https://api.maerskline.com/maeu/schedules/port?portGeoId="
