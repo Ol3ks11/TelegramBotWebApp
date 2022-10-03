@@ -39,6 +39,7 @@ namespace TelegramBotWebApp.Services.Resources
             temp.portName = port.portName;
             temp.countryName = port.countryName;
             temp.emoji = port.emoji;
+            temp.GeoId = port.GeoId;
             port = temp;
             return port;
         }

@@ -180,7 +180,7 @@ public class HandleUpdateService
         {
             if (user.VesselTarget == null)
             {
-                return await _botClient.SendTextMessageAsync(chat, "⚓️ Please setup your target vessel via /Setup_ship command. ⚓️");
+                return await _botClient.SendTextMessageAsync(chat, "⚓️ Your target vessel is missing, enter vessel name first. ⚓️");
             }
             else
             {
@@ -192,7 +192,7 @@ public class HandleUpdateService
         {
             if (user.PortTarget == null)
             {
-                return await _botClient.SendTextMessageAsync(chat, "🌉 Please setup your target port via /Setup_port command. 🌉");
+                return await _botClient.SendTextMessageAsync(chat, "🌉 Your target port is missing, enter port name with PORT keyword at start.. 🌉");
             }
             else
             {
@@ -229,32 +229,30 @@ public class HandleUpdateService
         async Task<Message> CheckIfNameLegit(ITelegramBotClient bot)
         {
             SqlManager sqlManager = new();
-            if (user.VesselTarget == null)
-            {
-                Ship ship = sqlManager.GetShipFromDbByName(update.Message.Text);
-                if (ship != null)
-                {
-                    await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
-                    await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.ShipName} 🛳");
-
-                    sqlManager.AddShip(update, ship);
-                    user = sqlManager.GetUser(update);
-                    return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
-                }
-            }
-            if (user.PortTarget == null && update.Message.Text!.Split(' ')[0].ToUpper() == "PORT")
+            if (update.Message.Text!.Split(' ')[0].ToUpper() == "PORT")
             {
                 Port port = sqlManager.GetPortFromDbByName(update.Message.Text!.Split(' ')[1]);
                 if (port != null)
                 {
                     await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
                     await _botClient.SendTextMessageAsync(chat.Id, $"🏭 {port.emoji}{port.portName}{port.emoji} 🏭");
+                    sqlManager.RemovePort(update);
                     sqlManager.AddPort(update, port);
-                    user = sqlManager.GetUser(update);
                     return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_port to recieve a schedule. 📅");
                 }
             }
-
+            else
+            {
+                Ship ship = sqlManager.GetShipFromDbByName(update.Message.Text);
+                if (ship != null)
+                {
+                    await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
+                    await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.ShipName} 🛳");
+                    sqlManager.RemoveShip(update);
+                    sqlManager.AddShip(update, ship);
+                    return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
+                }
+            }
             return await _botClient.SendTextMessageAsync(chat.Id, "❌ Can not find a matching name. ❌");
         }
     }

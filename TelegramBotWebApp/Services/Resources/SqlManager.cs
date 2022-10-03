@@ -32,6 +32,10 @@ namespace TelegramBotWebApp.Services.Resources
 
         public Ship GetShipFromDbByName(string ShipName)
         {
+            if (ShipName == "")
+            {
+                return null;
+            }
             Connect();
             SqlCommand selectCmd = new($"SELECT * FROM ShipsTable WHERE ShipName LIKE '%{ShipName}%'");
             selectCmd.Connection = sqlConnection;
@@ -54,6 +58,10 @@ namespace TelegramBotWebApp.Services.Resources
 
         public Port GetPortFromDbByName(string portName)
         {
+            if (portName == "")
+            {
+                return null;
+            }
             Connect();
             SqlCommand selectCmd = new($"SELECT * FROM PortsTable WHERE PortName = '{portName}'");
             selectCmd.Connection = sqlConnection;
