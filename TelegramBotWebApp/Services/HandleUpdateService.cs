@@ -2,6 +2,7 @@
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBotWebApp.Services.Resources;
 
 namespace Telegram.Bot.Examples.WebHook.Services;
@@ -229,6 +230,45 @@ public class HandleUpdateService
         async Task<Message> CheckIfNameLegit(ITelegramBotClient bot)
         {
             SqlManager sqlManager = new();
+            Port port = sqlManager.GetPortFromDbByName(update.Message.Text);
+            Ship ship = sqlManager.GetShipFromDbByName(update.Message.Text);
+            if (port != null && ship != null)
+            {
+                List<List<KeyboardButton>> keyboard = new();
+                List<KeyboardButton> row1 = new();
+                List<KeyboardButton> row2 = new();
+                row1.Add(new KeyboardButton(ship.ShipName + " 🛳"));
+                row2.Add(new KeyboardButton(port.portName + " 🏭"));
+                keyboard.Add(row1);
+                keyboard.Add(row2);
+                ReplyKeyboardMarkup rmk = new(keyboard);
+
+                /*KeyboardButton[] buttons = new KeyboardButton[2];
+                buttons[0] = new KeyboardButton(ship.ShipName + " 🛳");
+                buttons[1] = new KeyboardButton(port.portName + " 🏭");
+                var keyboard = new ReplyKeyboardMarkup(buttons);*/
+
+                return await _botClient.SendTextMessageAsync(chat.Id, "Found several results. Please choose from below.", replyMarkup: rmk);
+            }
+            if (port != null)
+            {
+                await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
+                await _botClient.SendTextMessageAsync(chat.Id, $"🏭 {port.emoji}{port.portName}{port.emoji} 🏭");
+                sqlManager.RemovePort(update);
+                sqlManager.AddPort(update, port);
+                return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_port to recieve a schedule. 📅");
+            }
+            if (ship != null)
+            {
+                await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
+                await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.ShipName} 🛳");
+                sqlManager.RemoveShip(update);
+                sqlManager.AddShip(update, ship);
+                return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
+            }
+            return await _botClient.SendTextMessageAsync(chat.Id, "❌ Can not find a matching name. ❌");
+
+            /*SqlManager sqlManager = new();
             if (update.Message.Text!.Split(' ')[0].ToUpper() == "PORT")
             {
                 Port port = sqlManager.GetPortFromDbByName(update.Message.Text!.Split(' ')[1]);
@@ -253,7 +293,7 @@ public class HandleUpdateService
                     return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
                 }
             }
-            return await _botClient.SendTextMessageAsync(chat.Id, "❌ Can not find a matching name. ❌");
+            return await _botClient.SendTextMessageAsync(chat.Id, "❌ Can not find a matching name. ❌");*/
         }
     }
 
