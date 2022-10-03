@@ -74,6 +74,7 @@ namespace TelegramBotWebApp.Services.Resources
                 _port.portName = table.Rows[0][1].ToString();
                 _port.countryName = table.Rows[0][2].ToString();
                 _port.emoji = table.Rows[0][3].ToString();
+                _port.GeoId = table.Rows[0][4].ToString();
             }
             else
             {
