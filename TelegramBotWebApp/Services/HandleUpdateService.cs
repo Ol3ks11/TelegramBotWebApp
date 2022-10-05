@@ -47,6 +47,10 @@ public class HandleUpdateService
 
     private async Task<Chat> GetChat(Update update)
     {
+        if (update.CallbackQuery != null)
+        {
+            return await _botClient.GetChatAsync(update.CallbackQuery.Message.Chat.Id);
+        }
         return await _botClient.GetChatAsync(update.Message.Chat.Id);
     }
 
