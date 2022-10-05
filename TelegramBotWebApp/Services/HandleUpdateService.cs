@@ -1,7 +1,10 @@
-﻿using System.Text;
+﻿using Microsoft.VisualBasic;
+using System;
+using System.Text;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBotWebApp.Services.Resources;
 
 namespace Telegram.Bot.Examples.WebHook.Services;
@@ -26,6 +29,7 @@ public class HandleUpdateService
         {
             UpdateType.Message            => BotOnMessageReceived(update, chat),
             UpdateType.EditedMessage      => BotOnMessageReceived(update, chat),
+            UpdateType.CallbackQuery      => BotOnCallBackReceived(update),
             _                             => UnknownUpdateHandlerAsync(update)
         };
 
@@ -44,6 +48,36 @@ public class HandleUpdateService
     private async Task<Chat> GetChat(Update update)
     {
         return await _botClient.GetChatAsync(update.Message.Chat.Id);
+    }
+
+    private async Task BotOnCallBackReceived(Update update)
+    {
+        SqlManager sqlManager = new SqlManager();
+        TelegramBotWebApp.Services.Resources.User user = sqlManager.GetUser(update);
+        Chat chat = update.CallbackQuery.Message.Chat;
+        if (update.CallbackQuery != null)
+        {
+            if (update.CallbackQuery.Data.Split(' ')[0] == "port")
+            {
+                string portname = update.CallbackQuery.Data.Remove(0, 4).Trim();
+                Port port = sqlManager.GetPortFromDbByName(portname);
+                await _botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id, $"🏭 {port.emoji}{port.portName}");
+                sqlManager.RemovePort(user.TelegramId.ToString());
+                sqlManager.AddPort(user.TelegramId.ToString(), port);
+                await _botClient.SendTextMessageAsync(chat.Id, $"🏭 {port.emoji}{port.portName}");
+                await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_port to recieve a schedule. 📅");
+            }
+            else
+            {
+                Ship ship = sqlManager.GetShipFromDbByName(update.CallbackQuery.Data);
+                await _botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id, $"🛳 {ship.ShipName}");
+                sqlManager.RemoveShip(user.TelegramId.ToString());
+                sqlManager.AddShip(user.TelegramId.ToString(), ship);
+                await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.ShipName}");
+                await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
+            }
+        }
+
     }
 
     private async Task BotOnMessageReceived(Update update, Chat chat)
@@ -95,7 +129,7 @@ public class HandleUpdateService
             }
             else
             {
-                builder.AppendLine($"🛳❌Your target vessel is missing.❌🛳");
+                builder.AppendLine($"🛳❌Your target vessel is missing.");
                 builder.AppendLine("Please enter vessel name to set it up.");
                 builder.AppendLine();
             }
@@ -103,27 +137,27 @@ public class HandleUpdateService
             {
                 builder.AppendLine($"🏭✅ Your target port is - {user.PortTarget.portName}");
                 builder.AppendLine($"🏭🔄 Enter /refresh_port to get port schedule.");
-                builder.AppendLine($"To re-set target port, enter port name with PORT keyword at start.");
+                builder.AppendLine($"To re-set target port, just enter another name.");
                 builder.AppendLine();
             }
             else
             {
-                builder.AppendLine($"🏭❌ Your target port is missing. ❌🏭");
-                builder.AppendLine("Please enter port name with PORT keyword to set it up.");
+                builder.AppendLine($"🏭❌ Your target port is missing.");
+                builder.AppendLine("Please enter port name to set it up.");
                 builder.AppendLine();
             }
             if (user.PrintAscending == true)
             {
-                builder.AppendLine($"Schedule will be printed in ascending order (from top to bottom).");
+                builder.AppendLine($"📅 Schedule will be printed in <b>ascending order</b> ⬇️ <i>(from top to bottom)</i>.");
                 builder.AppendLine($"/order_descending to change order to descending (from bottom to top).");
 
             }
             else if (user.PrintAscending == false)
             {
-                builder.AppendLine($"Schedule will be printed in descending order (from bottom to top).");
+                builder.AppendLine($"📅 Schedule will be printed in <b>descending order</b> ⬆️ <i>(from bottom to top)</i>.");
                 builder.AppendLine($"/order_ascending to change order to ascending (from top to bottom).");
             }
-            return await bot.SendTextMessageAsync(chat, builder.ToString());
+            return await bot.SendTextMessageAsync(chat, builder.ToString(), ParseMode.Html);
         }
 
         async Task<Message> GetHelp(ITelegramBotClient bot)
@@ -164,14 +198,14 @@ public class HandleUpdateService
 
         async Task<Message> SetupShip(ITelegramBotClient bot)
         {
-            sqlManager.RemoveShip(update);
+            sqlManager.RemoveShip(user.TelegramId.ToString());
             user = sqlManager.GetUser(update);
             return await bot.SendTextMessageAsync(chat, "🛳 Please enter vessel`s name. 🛳");
         }
 
         async Task<Message> SetupPort(ITelegramBotClient bot)
         {
-            sqlManager.RemovePort(update);
+            sqlManager.RemovePort(user.TelegramId.ToString());
             user = sqlManager.GetUser(update);
             return await bot.SendTextMessageAsync(chat, "🏭 Please enter port`s name. 🏭");
         }
@@ -228,30 +262,43 @@ public class HandleUpdateService
 
         async Task<Message> CheckIfNameLegit(ITelegramBotClient bot)
         {
-            SqlManager sqlManager = new();
-            if (update.Message.Text!.Split(' ')[0].ToUpper() == "PORT")
+            //SqlManager sqlManager = new();
+            Port port = sqlManager.GetPortFromDbByName(update.Message.Text);
+            Ship ship = sqlManager.GetShipFromDbByName(update.Message.Text);
+
+            if (port != null && ship != null)
             {
-                Port port = sqlManager.GetPortFromDbByName(update.Message.Text!.Split(' ')[1]);
-                if (port != null)
-                {
-                    await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
-                    await _botClient.SendTextMessageAsync(chat.Id, $"🏭 {port.emoji}{port.portName}{port.emoji} 🏭");
-                    sqlManager.RemovePort(update);
-                    sqlManager.AddPort(update, port);
-                    return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_port to recieve a schedule. 📅");
-                }
+                InlineKeyboardButton portButton = new($"🏭 Port: {port.portName}{port.emoji}");
+                portButton.CallbackData = "port " + port.portName;
+                InlineKeyboardButton shipButton = new($"🛳 Ship: {ship.ShipName}");
+                shipButton.CallbackData = ship.ShipName;
+                List<InlineKeyboardButton> row1 = new();
+                row1.Add(portButton);
+                List<InlineKeyboardButton> row2 = new();
+                row2.Add(shipButton);
+                List<List<InlineKeyboardButton>> keyboard = new();
+                keyboard.Add(row1);
+                keyboard.Add(row2);
+                InlineKeyboardMarkup inlineKeyboard = new(keyboard);
+                return await _botClient.SendTextMessageAsync(chat.Id, "Found several results:", replyMarkup: inlineKeyboard);
             }
-            else
+
+            if (port != null)
             {
-                Ship ship = sqlManager.GetShipFromDbByName(update.Message.Text);
-                if (ship != null)
-                {
-                    await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
-                    await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.ShipName} 🛳");
-                    sqlManager.RemoveShip(update);
-                    sqlManager.AddShip(update, ship);
-                    return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
-                }
+                await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
+                await _botClient.SendTextMessageAsync(chat.Id, $"🏭 {port.emoji}{port.portName}{port.emoji} 🏭");
+                sqlManager.RemovePort(user.TelegramId.ToString());
+                sqlManager.AddPort(user.TelegramId.ToString(), port);
+                return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_port to recieve a schedule. 📅");
+            }
+
+            if (ship != null)
+            {
+                await _botClient.SendTextMessageAsync(chat.Id, "✅ Match found! ✅");
+                await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.ShipName} 🛳");
+                sqlManager.RemoveShip(user.TelegramId.ToString());
+                sqlManager.AddShip(user.TelegramId.ToString(), ship);
+                return await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
             }
             return await _botClient.SendTextMessageAsync(chat.Id, "❌ Can not find a matching name. ❌");
         }

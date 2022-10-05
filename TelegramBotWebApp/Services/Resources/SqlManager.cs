@@ -102,8 +102,18 @@ namespace TelegramBotWebApp.Services.Resources
 
         public User GetUser(Update update)
         {
-            int userId = (int)update.Message.From.Id;
-            string name = $"{update.Message.From.FirstName} {update.Message.From.LastName}";
+            int userId;
+            string name;
+            if (update.Message != null)
+            {
+                userId = (int)update.Message.From.Id;
+                name = $"{update.Message.From.FirstName} {update.Message.From.LastName}";
+            }
+            else
+            {
+                userId = (int)update.CallbackQuery.From.Id;
+                name = $"{update.CallbackQuery.From.FirstName} {update.CallbackQuery.From.LastName}";
+            }
 
             Connect();
             SqlCommand selectCmd = new($"SELECT TelegramID, Name, VesselLock, PortLock, PrintAscending " +
@@ -161,31 +171,29 @@ namespace TelegramBotWebApp.Services.Resources
             }
         }
 
-        public void RemoveShip(Update update)
+        public void RemoveShip(string userID)
         {
-            int userId = (int)update.Message.From.Id;
             string query = $"UPDATE Users SET VesselLock = NULL WHERE TelegramID=@userID;";
             SqlCommand insertCmd = new();
             insertCmd.CommandType = CommandType.Text;
             insertCmd.CommandText = query;
             insertCmd.Parameters.Add("@userID", SqlDbType.NVarChar);
-            insertCmd.Parameters["@userID"].Value = userId;
+            insertCmd.Parameters["@userID"].Value = userID;
             insertCmd.Connection = sqlConnection;
             Connect();
             insertCmd.ExecuteNonQuery();
             Disconnect();
         }
 
-        public void AddShip(Update update, Ship ship)
+        public void AddShip(string userID, Ship ship)
         {
-            int userId = (int)update.Message.From.Id;
             string query = $"UPDATE Users SET VesselLock = @shipname WHERE TelegramID=@userID;";
             SqlCommand insertCmd = new();
             insertCmd.CommandType = CommandType.Text;
             insertCmd.CommandText = query;
             insertCmd.Parameters.Add("@userID", SqlDbType.Int);
-            insertCmd.Parameters.Add("@shipname", SqlDbType.NVarChar); 
-            insertCmd.Parameters["@userID"].Value = userId;
+            insertCmd.Parameters.Add("@shipname", SqlDbType.NVarChar);
+            insertCmd.Parameters["@userID"].Value = userID;
             insertCmd.Parameters["@shipname"].Value = ship.ShipName;
             insertCmd.Connection = sqlConnection;
             Connect();
@@ -193,31 +201,29 @@ namespace TelegramBotWebApp.Services.Resources
             Disconnect();
         }
 
-        public void RemovePort(Update update)
+        public void RemovePort(string userID)
         {
-            int userId = (int)update.Message.From.Id;
             string query = $"UPDATE Users SET PortLock = NULL WHERE TelegramID=@userID;";
             SqlCommand insertCmd = new();
             insertCmd.CommandType = CommandType.Text;
             insertCmd.CommandText = query;
             insertCmd.Parameters.Add("@userID", SqlDbType.Int);
-            insertCmd.Parameters["@userID"].Value = userId;
+            insertCmd.Parameters["@userID"].Value = userID;
             insertCmd.Connection = sqlConnection;
             Connect();
             insertCmd.ExecuteNonQuery();
             Disconnect();
         }
 
-        public void AddPort(Update update, Port port)
+        public void AddPort(string userID, Port port)
         {
-            int userId = (int)update.Message.From.Id;
             string query = $"UPDATE Users SET PortLock = @portName WHERE TelegramID=@userID;";
             SqlCommand insertCmd = new();
             insertCmd.CommandType = CommandType.Text;
             insertCmd.CommandText = query;
             insertCmd.Parameters.Add("@userID", SqlDbType.Int);
             insertCmd.Parameters.Add("@portName", SqlDbType.NVarChar);
-            insertCmd.Parameters["@userID"].Value = userId;
+            insertCmd.Parameters["@userID"].Value = userID;
             insertCmd.Parameters["@portName"].Value = port.portName;
             insertCmd.Connection = sqlConnection;
             Connect();

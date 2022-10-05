@@ -176,7 +176,7 @@ namespace TelegramBotWebApp.Services.Resources
                     string arrival = port.Vessels[i].Arrival.ToString("dd-MM-yyyy HH:mm");
                     string departure = port.Vessels[i].Departure.ToString("dd-MM-yyyy HH:mm");
 
-                    builder.AppendLine($"<code>Vessel:</code>: <b>{vesselName}</b>");
+                    builder.AppendLine($"<code>Vessel:</code> <b>{vesselName}</b>");
                     builder.AppendLine($"<code>ARR:</code> {arrival}");
                     builder.AppendLine($"<code>DEP:</code> {departure}");
                     builder.AppendLine();
