@@ -12,7 +12,8 @@ public class HandleUpdateService
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<HandleUpdateService> _logger;
     private VesselsManager vesselManager = new();
-    private SqlManager sqlManager = new();
+
+    private SqlManager sqlManager;
 
     public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger)
     {
@@ -238,7 +239,6 @@ public class HandleUpdateService
 
         async Task<Message> SendShipSchedule()
         {
-            SqlManager sqlManager = new();
             Ship ship = user.VesselTarget;
             ship = vesselManager.UpdateShipPorts(ship);
             List<string> schedule = vesselManager.BuildSchedule(ship,user);
@@ -251,7 +251,6 @@ public class HandleUpdateService
 
         async Task<Message> SendPortSchedule()
         {
-            SqlManager sqlManager = new();
             Port port = user.PortTarget;
             port = vesselManager.UpdatePortShips(port);
             List<string> schedule = vesselManager.BuildSchedule(port,user);
