@@ -24,5 +24,4 @@ app.UseEndpoints(endpoints =>
                                  new { controller = "Webhook", action = "Post" });
     endpoints.MapControllers();
 });
-
 app.Run();
