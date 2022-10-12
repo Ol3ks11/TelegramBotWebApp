@@ -1,15 +1,13 @@
 using Telegram.Bot;
 using Telegram.Bot.Examples.WebHook;
 using Telegram.Bot.Examples.WebHook.Services;
-using TelegramBotWebApp.Services.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
 builder.Logging.ClearProviders();
 builder.Logging.AddAzureWebAppDiagnostics();
 builder.Services.AddHostedService<ConfigureWebhook>();
-builder.Services.AddHttpClient("tgwebhook")
-    .AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(botConfig.BotToken, httpClient));
+builder.Services.AddHttpClient("tgwebhook").AddTypedClient<ITelegramBotClient>(httpClient => new TelegramBotClient(botConfig.BotToken, httpClient));
 builder.Services.AddScoped<HandleUpdateService>();
 builder.Services.AddControllers().AddNewtonsoftJson();
 
@@ -25,6 +23,5 @@ app.UseEndpoints(endpoints =>
                                  new { controller = "Webhook", action = "Post" });
     endpoints.MapControllers();
 });
+
 app.Run();
-SqlManager manager = new();
-Console.WriteLine("ConnectionString is " + manager.sqlConnectstring);
