@@ -2,6 +2,7 @@
 using System.Data.SqlClient;
 using Telegram.Bot.Types;
 using Microsoft.Extensions.Configuration;
+using Telegram.Bot.Examples.WebHook;
 
 namespace TelegramBotWebApp.Services.Resources
 {
@@ -13,8 +14,11 @@ namespace TelegramBotWebApp.Services.Resources
 
         public SqlManager(IConfiguration configuration)
         {
-            _configuration = configuration;
-            sqlConnectstring = _configuration.GetValue<string>("ConnectionStrings__MyConString");
+            var builder = WebApplication.CreateBuilder();
+            var config = builder.Configuration.GetSection("SqlConString").Get<SqlConString>();
+            sqlConnectstring = config.MyConString;
+            //_configuration = configuration;
+            //sqlConnectstring = _configuration.GetValue<string>("ConnectionStrings__MyConString");
             sqlConnection.ConnectionString = sqlConnectstring;
         }
 

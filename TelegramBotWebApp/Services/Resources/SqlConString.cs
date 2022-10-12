@@ -2,6 +2,6 @@
 {
     public class SqlConString
     {
-        public string connectionString { get; set; }
+        public string MyConString { get; set; }
     }
 }
