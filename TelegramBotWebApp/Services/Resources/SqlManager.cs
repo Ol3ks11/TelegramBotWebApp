@@ -11,10 +11,11 @@ namespace TelegramBotWebApp.Services.Resources
 
         public SqlManager()
         {
+            
             var MyConfig = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
             //sqlConnectstring = MyConfig.GetValue<string>("ConnectionStrings:myDb1");
-
-            sqlConnectstring = MyConfig.GetConnectionString("My_String");
+            sqlConnectstring = System.Environment.GetEnvironmentVariable("MYSQLCONNSTR_MyConString");
+            //sqlConnectstring = MyConfig.GetConnectionString("My_String");
             /*
             sqlConnectstring = @"Server=tcp:sqlserverforbot.database.windows.net,1433;"
                               +@"Initial Catalog=telegram-bot-sql-server;Persist Security Info=False;"
