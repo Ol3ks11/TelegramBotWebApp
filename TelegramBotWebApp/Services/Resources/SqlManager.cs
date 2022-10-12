@@ -7,7 +7,7 @@ namespace TelegramBotWebApp.Services.Resources
 {
     internal class SqlManager
     {
-        SqlConnection sqlConnection = new();
+        public SqlConnection sqlConnection = new();
 
         public SqlManager()
         {
