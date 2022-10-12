@@ -16,7 +16,7 @@ namespace TelegramBotWebApp.Services.Resources
             _configuration = configuration;
             //var MyConfig = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
             //sqlConnectstring = MyConfig.GetValue<string>("ConnectionStrings:myDb1");
-            sqlConnectstring = _configuration["ConncetionStrings:myDb1"];
+            sqlConnectstring = _configuration["ConnectionStrings:MyConString"];
             //sqlConnectstring = _configuration.GetConnectionString("myDb1");
             /*
             sqlConnectstring = @"Server=tcp:sqlserverforbot.database.windows.net,1433;"
