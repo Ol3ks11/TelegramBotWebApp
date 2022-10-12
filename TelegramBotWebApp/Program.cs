@@ -1,6 +1,7 @@
 using Telegram.Bot;
 using Telegram.Bot.Examples.WebHook;
 using Telegram.Bot.Examples.WebHook.Services;
+using TelegramBotWebApp.Services.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
@@ -25,3 +26,5 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllers();
 });
 app.Run();
+SqlManager manager = new();
+Console.WriteLine("ConnectionString is " + manager.sqlConnectstring);

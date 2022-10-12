@@ -100,8 +100,6 @@ public class HandleUpdateService
             "/setup_ship"       => SetupShip(_botClient),
             "/setup_port"       => SetupPort(_botClient),
 
-            "/get_sql_string"   => GetSqlString(_botClient),
-
             "/refresh_ship"     => RefreshShip(_botClient),
             "/refresh_port"     => RefreshPort(_botClient),
 
@@ -112,11 +110,6 @@ public class HandleUpdateService
         Message sentMessage = await action;
         ToLogSentMsg(sentMessage);
         sqlManager.AddToRequestsCount(update);
-
-        async Task<Message> GetSqlString(ITelegramBotClient bot)
-        {
-            return await bot.SendTextMessageAsync(chat, sqlManager.sqlConnectstring);
-        }
 
         async Task<Message> Start(ITelegramBotClient bot)
         {
