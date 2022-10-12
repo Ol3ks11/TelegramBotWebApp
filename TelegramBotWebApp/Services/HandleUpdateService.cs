@@ -80,7 +80,6 @@ public class HandleUpdateService
                 await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
             }
         }
-
     }
 
     private async Task BotOnMessageReceived(Update update, Chat chat)
@@ -328,7 +327,7 @@ public class HandleUpdateService
         _logger.LogInformation("\n Receive message type: {message.Type}", update.Message.Type);
         _logger.LogInformation("\n From: {message.From.FirstName} {message.From.LastName}", update.Message.From.FirstName, update.Message.From.LastName);
         _logger.LogInformation("\n MessageText: {message.Text}", update.Message.Text);
-        _logger.LogInformation("\n SqlString: {sqlManager.sqlConnectstring}", sqlManager.sqlConnection.ConnectionString);
+        _logger.LogInformation("\n SqlString: {sqlManager.sqlConnectstring}", sqlManager.sqlConnectstring);
     }
     private void ToLogSentMsg(Message sentMessage)
     {
