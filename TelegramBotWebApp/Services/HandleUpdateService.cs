@@ -12,13 +12,16 @@ public class HandleUpdateService
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<HandleUpdateService> _logger;
     private VesselsManager vesselManager = new();
-
     private SqlManager sqlManager;
 
     public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger)
     {
         _botClient = botClient;
         _logger = logger;
+
+        IConfiguration config = new ConfigurationBuilder()
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false).Build();
+        sqlManager = new SqlManager(config);
     }
 
     public async Task EchoAsync(Update update)
