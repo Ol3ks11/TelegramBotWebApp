@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
-using Telegram.Bot.Types;
 
 namespace TelegramBotWebApp.Services.Resources
 {

@@ -1,24 +1,26 @@
-﻿using Microsoft.VisualBasic;
-using Newtonsoft.Json;
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 
 namespace TelegramBotWebApp.Services.Resources
 {
     internal class SqlManager
     {
 
-        string sqlConnectstring;
+        public string sqlConnectstring;
         SqlConnection sqlConnection = new();
+        
 
         public SqlManager()
         {
+            ConfigurationManager configurationManager = new ConfigurationManager();
+            sqlConnectstring = configurationManager.GetConnectionString("myDb1");
+            /*
             sqlConnectstring = @"Server=tcp:sqlserverforbot.database.windows.net,1433;"
                               +@"Initial Catalog=telegram-bot-sql-server;Persist Security Info=False;"
                               +@"User ID=myadmin;Password=Bobbas47;MultipleActiveResultSets=False;"
                               +@"Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+            */
             sqlConnection.ConnectionString = sqlConnectstring;
         }
         private void Connect()
@@ -84,26 +86,12 @@ namespace TelegramBotWebApp.Services.Resources
             return _port;
         }
 
-        public string GetEmoji(string countryName)
-        {
-            Connect();
-            SqlCommand selectCmd = new($"SELECT Emoji FROM CountriesTable WHERE CountryName = '{countryName}'");
-            selectCmd.Connection = sqlConnection;
-            SqlDataAdapter adapter = new(selectCmd);
-            DataTable table = new();
-            adapter.Fill(table);
-            Disconnect();
-            if (table.Rows.Count == 0)
-            {
-                return "";
-            }
-            return table.Rows[0][0].ToString();
-        }
-
         public User GetUser(Update update)
         {
             int userId;
             string name;
+
+            //check if update is message or callbackQuery
             if (update.Message != null)
             {
                 userId = (int)update.Message.From.Id;
@@ -114,7 +102,7 @@ namespace TelegramBotWebApp.Services.Resources
                 userId = (int)update.CallbackQuery.From.Id;
                 name = $"{update.CallbackQuery.From.FirstName} {update.CallbackQuery.From.LastName}";
             }
-
+            //check if user exist in Users DB table
             Connect();
             SqlCommand selectCmd = new($"SELECT TelegramID, Name, VesselLock, PortLock, PrintAscending " +
                                        $"FROM Users " +
@@ -126,6 +114,7 @@ namespace TelegramBotWebApp.Services.Resources
             Disconnect();
             if (table.Rows.Count == 0)
             {
+                //make a new entry in users table
                 string query = $"INSERT INTO Users (TelegramID, Name, Requests, PrintAscending)" 
                              + $"VALUES (@userId, @name, @requests, @printAsc);";
                 SqlCommand insertCmd = new();
@@ -154,6 +143,7 @@ namespace TelegramBotWebApp.Services.Resources
             }
             else
             {
+                //retrieve user from DB
                 User user = new();
                 user.TelegramId = (int)table.Rows[0][0];
                 user.Name = table.Rows[0][1].ToString();

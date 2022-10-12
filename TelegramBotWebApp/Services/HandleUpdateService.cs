@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualBasic;
-using System;
-using System.Text;
+﻿using System.Text;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -14,6 +12,7 @@ public class HandleUpdateService
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<HandleUpdateService> _logger;
     private VesselsManager vesselManager = new();
+    private SqlManager sqlManager = new();
 
     public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger)
     {
@@ -56,7 +55,7 @@ public class HandleUpdateService
 
     private async Task BotOnCallBackReceived(Update update)
     {
-        SqlManager sqlManager = new SqlManager();
+        //SqlManager sqlManager = new SqlManager();
         TelegramBotWebApp.Services.Resources.User user = sqlManager.GetUser(update);
         Chat chat = update.CallbackQuery.Message.Chat;
         if (update.CallbackQuery != null)
@@ -87,7 +86,7 @@ public class HandleUpdateService
     private async Task BotOnMessageReceived(Update update, Chat chat)
     {
         ToLogRecievedMsg(update);
-        SqlManager sqlManager = new SqlManager();
+        //SqlManager sqlManager = new SqlManager();
         TelegramBotWebApp.Services.Resources.User user = sqlManager.GetUser(update);
         
         if (update.Message.Type != MessageType.Text)
