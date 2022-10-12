@@ -7,24 +7,12 @@ namespace TelegramBotWebApp.Services.Resources
 {
     internal class SqlManager
     {
-        public string sqlConnectstring;
-        private IConfiguration _configuration;
         SqlConnection sqlConnection = new();
 
-        public SqlManager(IConfiguration configuration)
+        public SqlManager()
         {
-            _configuration = configuration;
-            //var MyConfig = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-            //sqlConnectstring = MyConfig.GetValue<string>("ConnectionStrings:myDb1");
-            sqlConnectstring = _configuration["ConnectionStrings:MyConString"];
-            //sqlConnectstring = _configuration.GetConnectionString("myDb1");
-            /*
-            sqlConnectstring = @"Server=tcp:sqlserverforbot.database.windows.net,1433;"
-                              +@"Initial Catalog=telegram-bot-sql-server;Persist Security Info=False;"
-                              +@"User ID=myadmin;Password=Bobbas47;MultipleActiveResultSets=False;"
-                              +@"Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
-            */
-            sqlConnection.ConnectionString = sqlConnectstring;
+            var MyConfig = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+            sqlConnection.ConnectionString = MyConfig.GetValue<string>("ConnectionStrings:MyConString");
         }
 
         private void Connect()
