@@ -13,13 +13,11 @@ public class HandleUpdateService
     private readonly ILogger<HandleUpdateService> _logger;
     private VesselsManager vesselManager = new();
     private SqlManager sqlManager = new();
-
     public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger)
     {
         _botClient = botClient;
         _logger = logger;
     }
-
     public async Task EchoAsync(Update update, string sqlConString)
     {
         sqlManager.sqlConnection.ConnectionString = sqlConString;
@@ -44,7 +42,6 @@ public class HandleUpdateService
             await HandleErrorAsync(exception);
         }
     }
-
     private async Task<Chat> GetChat(Update update)
     {
         if (update.CallbackQuery != null)
@@ -53,7 +50,6 @@ public class HandleUpdateService
         }
         return await _botClient.GetChatAsync(update.Message.Chat.Id);
     }
-
     private async Task BotOnCallBackReceived(Update update)
     {
         //SqlManager sqlManager = new SqlManager();
@@ -82,7 +78,6 @@ public class HandleUpdateService
             }
         }
     }
-
     private async Task BotOnMessageReceived(Update update, Chat chat)
     {
         ToLogRecievedMsg(update);
@@ -240,7 +235,7 @@ public class HandleUpdateService
         async Task<Message> SendShipSchedule()
         {
             Ship ship = user.VesselTarget;
-            ship = vesselManager.UpdateShipPorts(ship);
+            ship = vesselManager.UpdateShipPorts(ship, sqlManager);
             List<string> schedule = vesselManager.BuildSchedule(ship,user);
             for (int i=0;i<schedule.Count-1;i++)
             {
@@ -304,7 +299,6 @@ public class HandleUpdateService
             return await _botClient.SendTextMessageAsync(chat.Id, "❌ Can not find a matching name. ❌");
         }
     }
-
     private Task UnknownUpdateHandlerAsync(Update update)
     {
         _logger.LogInformation("Unknown update type: {UpdateType}", update.Type);
@@ -326,7 +320,6 @@ public class HandleUpdateService
         _logger.LogInformation("\n Receive message type: {message.Type}", update.Message.Type);
         _logger.LogInformation("\n From: {message.From.FirstName} {message.From.LastName}", update.Message.From.FirstName, update.Message.From.LastName);
         _logger.LogInformation("\n MessageText: {message.Text}", update.Message.Text);
-        _logger.LogInformation("\n SqlString: {sqlManager.sqlConnectstring}", sqlManager.sqlConnection.ConnectionString);
     }
     private void ToLogSentMsg(Message sentMessage)
     {

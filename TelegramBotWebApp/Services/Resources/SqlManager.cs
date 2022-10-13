@@ -6,7 +6,7 @@ using Telegram.Bot.Examples.WebHook;
 
 namespace TelegramBotWebApp.Services.Resources
 {
-    internal class SqlManager
+    public class SqlManager
     {
         public SqlConnection sqlConnection = new();
 

@@ -5,8 +5,7 @@ namespace TelegramBotWebApp.Services.Resources
 {
     public class VesselsManager
     {
-
-        public Ship UpdateShipPorts(Ship ship)
+        public Ship UpdateShipPorts(Ship ship, SqlManager sqlManager)
         {
             Ship temp = new();
             //populate temp.Ports list from API
@@ -16,7 +15,6 @@ namespace TelegramBotWebApp.Services.Resources
             temp.ShipCode = ship.ShipCode;
             ship = temp;
             //get all data which is missing in API from DB
-            SqlManager sqlManager = new();
             for (int i = 0; i < ship.Ports.Count; i++)
             {
                 Port checkedPort = sqlManager.GetPortFromDbByName(ship.Ports[i].portName);
