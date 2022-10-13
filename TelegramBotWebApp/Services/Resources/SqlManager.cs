@@ -9,17 +9,18 @@ namespace TelegramBotWebApp.Services.Resources
     public class SqlManager
     {
         public SqlConnection sqlConnection = new();
-
+        public void SetupConnectionString(string conString)
+        {
+            sqlConnection.ConnectionString = conString;
+        }
         private void Connect()
         {
             sqlConnection.Open();
         }
-
         private void Disconnect()
         {
             sqlConnection.Close();
         }
-
         public Ship GetShipFromDbByName(string ShipName)
         {
             if (ShipName == "")
@@ -45,7 +46,6 @@ namespace TelegramBotWebApp.Services.Resources
             Disconnect();
             return _ship;
         }
-
         public Port GetPortFromDbByName(string portName)
         {
             if (portName == "")
@@ -73,7 +73,6 @@ namespace TelegramBotWebApp.Services.Resources
             Disconnect();
             return _port;
         }
-
         public User GetUser(Update update)
         {
             int userId;
@@ -148,7 +147,6 @@ namespace TelegramBotWebApp.Services.Resources
                 return user;
             }
         }
-
         public void RemoveShip(string userID)
         {
             string query = $"UPDATE Users SET VesselLock = NULL WHERE TelegramID=@userID;";
@@ -162,7 +160,6 @@ namespace TelegramBotWebApp.Services.Resources
             insertCmd.ExecuteNonQuery();
             Disconnect();
         }
-
         public void AddShip(string userID, Ship ship)
         {
             string query = $"UPDATE Users SET VesselLock = @shipname WHERE TelegramID=@userID;";
@@ -178,7 +175,6 @@ namespace TelegramBotWebApp.Services.Resources
             insertCmd.ExecuteNonQuery();
             Disconnect();
         }
-
         public void RemovePort(string userID)
         {
             string query = $"UPDATE Users SET PortLock = NULL WHERE TelegramID=@userID;";
@@ -192,7 +188,6 @@ namespace TelegramBotWebApp.Services.Resources
             insertCmd.ExecuteNonQuery();
             Disconnect();
         }
-
         public void AddPort(string userID, Port port)
         {
             string query = $"UPDATE Users SET PortLock = @portName WHERE TelegramID=@userID;";
@@ -208,7 +203,6 @@ namespace TelegramBotWebApp.Services.Resources
             insertCmd.ExecuteNonQuery();
             Disconnect();
         }
-
         public void AddToRequestsCount(Update update)
         {
             int userId = (int)update.Message.From.Id;
@@ -223,7 +217,6 @@ namespace TelegramBotWebApp.Services.Resources
             insertCmd.ExecuteNonQuery();
             Disconnect();
         }
-
         public void ChangePrintAscending(Update update,int option)
         {
             int userId = (int)update.Message.From.Id;

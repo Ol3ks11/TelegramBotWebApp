@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Telegram.Bot.Examples.WebHook.Services;
 using Telegram.Bot.Types;
+using TelegramBotWebApp.Services.Resources;
 
 namespace Telegram.Bot.Examples.WebHook.Controllers;
 
@@ -17,7 +18,11 @@ public class WebhookController : ControllerBase
     public async Task<IActionResult> Post([FromServices] HandleUpdateService handleUpdateService, [FromBody] Update update)
     {
         var conString = _configuration.GetValue<string>("ConnectionStrings:MyConString");
-        await handleUpdateService.EchoAsync(update, conString);
+        SqlManager sqlManager = new();
+                   sqlManager.SetupConnectionString(conString);
+
+              handleUpdateService.SetupSqlManager(sqlManager);
+        await handleUpdateService.EchoAsync(update);
         return Ok();
     }
 }

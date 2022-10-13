@@ -12,15 +12,18 @@ public class HandleUpdateService
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<HandleUpdateService> _logger;
     private VesselsManager vesselManager = new();
-    private SqlManager sqlManager = new();
+    private SqlManager sqlManager;
     public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger)
     {
         _botClient = botClient;
         _logger = logger;
     }
-    public async Task EchoAsync(Update update, string sqlConString)
+    public void SetupSqlManager (SqlManager manager)
     {
-        sqlManager.sqlConnection.ConnectionString = sqlConString;
+        sqlManager = manager;
+    }
+    public async Task EchoAsync(Update update)
+    {
         Chat chat = GetChat(update).Result;
 
         var handler = update.Type switch

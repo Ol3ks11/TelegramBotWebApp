@@ -26,7 +26,6 @@ namespace TelegramBotWebApp.Services.Resources
             }
             return ship;
         }
-
         public Port UpdatePortShips(Port port)
         {
             Port temp = new();
@@ -40,7 +39,6 @@ namespace TelegramBotWebApp.Services.Resources
             port = temp;
             return port;
         }
-
         private async Task<string> GetPortsJson(Ship ship)
         {
             string fromDateStr = DateOnly.FromDateTime(DateTime.Now).ToString("yyyy-MM-dd");
@@ -71,7 +69,6 @@ namespace TelegramBotWebApp.Services.Resources
             }
             return null;
         }
-
         private async Task<string> GetShipsJson(Port port)
         {
             string fromDateStr = DateOnly.FromDateTime(DateTime.Now).ToString("yyyy-MM-dd");
@@ -102,7 +99,6 @@ namespace TelegramBotWebApp.Services.Resources
             }
             return null;
         }
-
         public List<string> BuildSchedule(Ship ship, User user)
         {
             StringBuilder builder = new();
@@ -158,7 +154,6 @@ namespace TelegramBotWebApp.Services.Resources
             result.Add(builder.ToString());
             return result;
         }
-
         public List<string> BuildSchedule(Port port, User user)
         {
             StringBuilder builder = new();
