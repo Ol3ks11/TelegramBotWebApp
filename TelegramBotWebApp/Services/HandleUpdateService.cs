@@ -20,7 +20,7 @@ public class HandleUpdateService
         _logger = logger;
 
         IConfiguration config = new ConfigurationBuilder()
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false).Build();
+                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).Build();
         sqlManager = new SqlManager(config);
     }
 
