@@ -170,8 +170,7 @@ public class HandleUpdateService
             builder.AppendLine($"To re-set target vessel, just enter another name.");
             builder.AppendLine();
             builder.AppendLine($"🏭🔄 Enter /refresh_port to get port schedule.");
-            builder.AppendLine($"To re-set target port, enter port name with PORT keyword at start.");
-            builder.AppendLine($"For example: \"PORT Manila\", or \"PORT Aarhus\"");
+            builder.AppendLine($"To re-set target port, just enter another name.");
             builder.AppendLine();
             builder.AppendLine($"Enter /order_descending to change print order to descending.");
             builder.AppendLine($"Descending - Nearest date is last.");
