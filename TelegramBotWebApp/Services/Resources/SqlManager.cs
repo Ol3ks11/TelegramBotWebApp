@@ -8,16 +8,7 @@ namespace TelegramBotWebApp.Services.Resources
 {
     internal class SqlManager
     {
-        private IConfiguration _configuration;
-        public string sqlConnectstring;
-        SqlConnection sqlConnection = new();
-
-        public SqlManager(IConfiguration configuration)
-        {
-            var sqlstrings = configuration.GetValue<SqlConString>("ConnectionStrings");
-            sqlConnectstring = sqlstrings.MyConString;
-            sqlConnection.ConnectionString = sqlConnectstring;
-        }
+        public SqlConnection sqlConnection = new();
 
         private void Connect()
         {

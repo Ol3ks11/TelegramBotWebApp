@@ -12,20 +12,17 @@ public class HandleUpdateService
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<HandleUpdateService> _logger;
     private VesselsManager vesselManager = new();
-    private SqlManager sqlManager;
+    private SqlManager sqlManager = new();
 
     public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger)
     {
         _botClient = botClient;
         _logger = logger;
-
-        IConfiguration config = new ConfigurationBuilder()
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).Build();
-        sqlManager = new SqlManager(config);
     }
 
-    public async Task EchoAsync(Update update)
+    public async Task EchoAsync(Update update, string sqlConString)
     {
+        sqlManager.sqlConnection.ConnectionString = sqlConString;
         Chat chat = GetChat(update).Result;
 
         var handler = update.Type switch
@@ -329,7 +326,7 @@ public class HandleUpdateService
         _logger.LogInformation("\n Receive message type: {message.Type}", update.Message.Type);
         _logger.LogInformation("\n From: {message.From.FirstName} {message.From.LastName}", update.Message.From.FirstName, update.Message.From.LastName);
         _logger.LogInformation("\n MessageText: {message.Text}", update.Message.Text);
-        _logger.LogInformation("\n SqlString: {sqlManager.sqlConnectstring}", sqlManager.sqlConnectstring);
+        _logger.LogInformation("\n SqlString: {sqlManager.sqlConnectstring}", sqlManager.sqlConnection.ConnectionString);
     }
     private void ToLogSentMsg(Message sentMessage)
     {
