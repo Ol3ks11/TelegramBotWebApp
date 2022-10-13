@@ -14,11 +14,8 @@ namespace TelegramBotWebApp.Services.Resources
 
         public SqlManager(IConfiguration configuration)
         {
-            var builder = WebApplication.CreateBuilder();
-            var config = builder.Configuration.GetSection("SqlConString").Get<SqlConString>();
-            sqlConnectstring = config.MyConString;
-            //_configuration = configuration;
-            //sqlConnectstring = _configuration.GetValue<string>("ConnectionStrings__MyConString");
+            var sqlstrings = configuration.GetValue<SqlConString>("ConnectionStrings");
+            sqlConnectstring = sqlstrings.MyConString;
             sqlConnection.ConnectionString = sqlConnectstring;
         }
 
