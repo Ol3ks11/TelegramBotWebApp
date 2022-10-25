@@ -343,13 +343,14 @@ public class HandleUpdateService
         Chat chat = GetChat(update).Result;
         if (IsPinMsgLegit(chat) == false)
         {
+            _logger.LogInformation("Pin Message is NOT legit");
             await _botClient.UnpinAllChatMessages(chat.Id);
             user.PortTarget = null;
             user.VesselTarget = null;
             await SetPinnedMsg(chat);
             return user;
         }
-        
+        _logger.LogInformation("Pin Message IS legit");
         string[] settings = chat.PinnedMessage.Text.Split(';');
 
         Ship userShip = new();
