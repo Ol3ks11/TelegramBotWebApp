@@ -97,7 +97,7 @@ namespace TelegramBotWebApp.Services.Resources
             }
             return null;
         }
-        public List<string> BuildSchedule(Ship ship, User user)
+        public List<string> BuildSchedule(Ship ship, UserSet user)
         {
             StringBuilder builder = new();
             List<string> result = new();
@@ -152,7 +152,7 @@ namespace TelegramBotWebApp.Services.Resources
             result.Add(builder.ToString());
             return result;
         }
-        public List<string> BuildSchedule(Port port, User user)
+        public List<string> BuildSchedule(Port port, UserSet user)
         {
             StringBuilder builder = new();
             List<string> result = new();

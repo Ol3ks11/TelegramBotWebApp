@@ -8,7 +8,7 @@ namespace TelegramBotWebApp.Services.Resources
 {
     public class SqlManager
     {
-        public SqlConnection sqlConnection = new();
+        /*public SqlConnection sqlConnection = new();
         public void SetupConnectionString(string conString)
         {
             sqlConnection.ConnectionString = conString;
@@ -233,7 +233,7 @@ namespace TelegramBotWebApp.Services.Resources
         }
 
         #region Populate Tables
-        /*public void AddCountries(List<EmojiClass> emojiList)
+        public void AddCountries(List<EmojiClass> emojiList)
         {
             Connect();
             foreach (var emoji in emojiList)
@@ -319,7 +319,8 @@ namespace TelegramBotWebApp.Services.Resources
                 insertCmd.ExecuteNonQuery();
             }
             Disconnect();
-        }*/
+        }
         #endregion
+        */
     }
 }

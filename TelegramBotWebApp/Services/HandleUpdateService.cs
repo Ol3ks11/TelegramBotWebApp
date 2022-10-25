@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -51,7 +52,7 @@ public class HandleUpdateService
 
     private async Task BotOnCallBackReceived(Update update, Chat chat)
     {
-        TelegramBotWebApp.Services.Resources.User user = ParsePinnedMsg(update, chat);
+        UserSet user = ParsePinnedMsg(update, chat);
         //Chat chat = update.CallbackQuery.Message.Chat;
         if (update.CallbackQuery != null)
         {
@@ -102,9 +103,11 @@ public class HandleUpdateService
     private async Task BotOnMessageReceived(Update update, Chat chat)
     {
         ToLogRecievedMsg(update);
-        //SqlManager sqlManager = new SqlManager();
-        //TelegramBotWebApp.Services.Resources.User user = sqlManager.GetUser(update);
-        TelegramBotWebApp.Services.Resources.User user = ParsePinnedMsg(update, chat);
+        if (IsPinMsgLegit(update, chat) == false)
+        {
+            SetPinnedMsg(update, chat);
+        }
+        UserSet user = ParsePinnedMsg(update, chat);
 
         if (update.Message.Type != MessageType.Text)
             return;
@@ -126,15 +129,14 @@ public class HandleUpdateService
 
         async Task<Message> Start(ITelegramBotClient bot)
         {
-            await bot.UnpinAllChatMessages(chat.Id);
-            var message = bot.SendTextMessageAsync(chat.Id, "🛳🚫: Name, Code; 🏭🚫: Name, GeoId; 📅:⬇️");
-            await bot.PinChatMessageAsync(chat.Id, message.Id);
+            SetPinnedMsg(_botClient);
             StringBuilder builder = new();
             builder.AppendLine("Welcome to Maersk Schedule Bot!");
             builder.AppendLine("You can get vessels schedule or ports schedule here.");
             await bot.SendTextMessageAsync(chat, builder.ToString());
             return await GetStatus(_botClient);
         }
+
 
         async Task<Message> GetStatus(ITelegramBotClient bot)
         {
@@ -346,7 +348,7 @@ public class HandleUpdateService
         }
 
     }
-    private TelegramBotWebApp.Services.Resources.User ParsePinnedMsg(Update update, Chat chat)
+    private UserSet ParsePinnedMsg(Update update, Chat chat)
     {
         //pinned message format: "🛳✅: Vessel Name, Code; 🏭✅: Port Name, GeoId; 📅: ⬇️/⬆️"
 
@@ -366,7 +368,7 @@ public class HandleUpdateService
             userPort.GeoId = settings[1].Split(',')[0].Trim();
         }
 
-        TelegramBotWebApp.Services.Resources.User user = new();
+        UserSet user = new();
         user.VesselTarget = userShip;
         user.PortTarget = userPort;
         if (settings[2].Split(':')[1].Trim() == "⬇️")
@@ -379,6 +381,27 @@ public class HandleUpdateService
         }
         return user;
     }
+
+    private async Task SetPinnedMsg(Update update, Chat chat)
+    {
+        await _botClient.UnpinAllChatMessages(chat.Id);
+        var message = _botClient.SendTextMessageAsync(chat.Id, "🛳🚫: Name, Code; 🏭🚫: Name, GeoId; 📅:⬇️");
+        await _botClient.PinChatMessageAsync(chat.Id, message.Id);
+    }
+
+    private bool IsPinMsgLegit(Update update, Chat chat)
+    {
+        if (chat.PinnedMessage != null)
+        {
+            string pinnedMsg = chat.PinnedMessage.Text;
+            if (pinnedMsg.Contains("🛳"));
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private Task UnknownUpdateHandlerAsync(Update update)
     {
