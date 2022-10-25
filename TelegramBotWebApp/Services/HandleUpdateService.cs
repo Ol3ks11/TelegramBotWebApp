@@ -44,7 +44,7 @@ public class HandleUpdateService
 
     private async Task BotOnCallBackReceived(Update update, Chat chat)
     {
-        UserSet user = ParsePinnedMsg(update);
+        UserSet user = ParsePinnedMsg(update).Result;
         //Chat chat = update.CallbackQuery.Message.Chat;
         if (update.CallbackQuery != null)
         {
@@ -95,13 +95,8 @@ public class HandleUpdateService
     private async Task BotOnMessageReceived(Update update, Chat chat)
     {
         ToLogRecievedMsg(update);
-
-        if (IsPinMsgLegit(chat) == false)
-        {
-            await _botClient.UnpinAllChatMessages(chat.Id);
-            await SetPinnedMsg(chat);
-        }
-        UserSet user = ParsePinnedMsg(update);
+        
+        UserSet user = ParsePinnedMsg(update).Result;
 
         if (update.Message.Type != MessageType.Text)
             return;
@@ -341,10 +336,20 @@ public class HandleUpdateService
         }
 
     }
-    private UserSet ParsePinnedMsg(Update update)
+    private async Task<UserSet> ParsePinnedMsg(Update update)
     {
         //pinned message format: "🛳✅: Vessel Name, Code; 🏭✅: Port Name, GeoId; 📅: ⬇️/⬆️"
+        UserSet user = new();
         Chat chat = GetChat(update).Result;
+        if (IsPinMsgLegit(chat) == false)
+        {
+            await _botClient.UnpinAllChatMessages(chat.Id);
+            user.PortTarget = null;
+            user.VesselTarget = null;
+            await SetPinnedMsg(chat);
+            return user;
+        }
+        
         string[] settings = chat.PinnedMessage.Text.Split(';');
 
         Ship userShip = new();
@@ -361,7 +366,6 @@ public class HandleUpdateService
             userPort.GeoId = settings[1].Split(',')[0].Trim();
         }
 
-        UserSet user = new();
         user.VesselTarget = userShip;
         user.PortTarget = userPort;
         if (settings[2].Split(':')[1].Trim() == "⬇️")
