@@ -13,7 +13,7 @@ namespace TelegramBotWebApp.Services.Resources
             temp.ShipName = ship.ShipName;
             temp.ShipCode = ship.ShipCode;
             ship = temp;
-            Root root = (Root)MemoryCache.Default["Root"];
+            Root root = GetRoot();
             foreach (var port in ship.Ports)
             {
                 foreach (var rootport in root.Ports)
@@ -203,23 +203,28 @@ namespace TelegramBotWebApp.Services.Resources
         }
         public Root GetRoot()
         {
-            Root vessels = ParseActiveVesselsFromJson();
-            Root ports = ParseActivePortsFromJson();
-            string[] emojis = File.ReadAllLines(@"\Resources\emoji_flags.txt");
-            foreach (var port in ports.Ports)
+            Root root = (Root)MemoryCache.Default["root"];
+            if (root == null)
             {
-                foreach (var line in emojis)
+                Root vessels = ParseActiveVesselsFromJson();
+                Root ports = ParseActivePortsFromJson();
+                string[] emojis = File.ReadAllLines(@"\Resources\emoji_flags.txt");
+                foreach (var port in ports.Ports)
                 {
-                    if (line.Contains(port.countryName))
+                    foreach (var line in emojis)
                     {
-                        port.emoji = line.Split(':')[0].Trim();
+                        if (line.Contains(port.countryName))
+                        {
+                            port.emoji = line.Split(':')[0].Trim();
+                        }
                     }
                 }
+
+                root.Vessels = vessels.Vessels;
+                root.Ports = ports.Ports;
+                MemoryCache.Default["root"] = root;
             }
-            Root final = new();
-            final.Vessels = vessels.Vessels;
-            final.Ports = ports.Ports;
-            return final;
+            return root;
         }
         public Root ParseActiveVesselsFromJson()
         {
