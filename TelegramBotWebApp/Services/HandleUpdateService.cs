@@ -388,7 +388,7 @@ public class HandleUpdateService
             return false;
         }
         string pinnedMsg = chat.PinnedMessage.Text;
-        if (pinnedMsg.Contains("🛳"))
+        if (pinnedMsg.Contains("🛳") && pinnedMsg.Contains("🏭") && pinnedMsg.Contains("📅"))
         {
             return true;
         }
