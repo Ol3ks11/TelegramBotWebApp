@@ -53,7 +53,7 @@ public class HandleUpdateService
                 string portname = update.CallbackQuery.Data.Remove(0, 4).Trim();
                 Port port = vesselManager.GetPortFromActive(portname);
                 await _botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id, $"🏭 {port.emoji}{port.portName}");
-                EditPinnedPort(port);
+                await EditPinnedPort(port);
                 await _botClient.SendTextMessageAsync(chat.Id, $"🏭 {port.emoji}{port.portName}");
                 await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_port to recieve a schedule. 📅");
             }
@@ -61,7 +61,7 @@ public class HandleUpdateService
             {
                 Ship ship = vesselManager.GetShipFromActive(update.CallbackQuery.Data);
                 await _botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id, $"🛳 {ship.ShipName}");
-                EditPinnedShip(ship);
+                await EditPinnedShip(ship);
                 await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.ShipName}");
                 await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
             }
@@ -98,7 +98,7 @@ public class HandleUpdateService
 
         if (IsPinMsgLegit(chat) == false)
         {
-            SetPinnedMsg(chat);
+            await SetPinnedMsg(chat);
         }
         UserSet user = ParsePinnedMsg(update);
 
@@ -122,7 +122,7 @@ public class HandleUpdateService
 
         async Task<Message> Start(ITelegramBotClient bot)
         {
-            SetPinnedMsg(chat);
+            await SetPinnedMsg(chat);
             StringBuilder builder = new();
             builder.AppendLine("Welcome to Maersk Schedule Bot!");
             builder.AppendLine("You can get vessels schedule or ports schedule here.");
