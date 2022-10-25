@@ -203,7 +203,28 @@ namespace TelegramBotWebApp.Services.Resources
         }
         public Root GetRoot()
         {
+            Root vessels = ParseActiveVesselsFromJson();
+            Root ports = ParseActivePortsFromJson();
+            string fileName = "emoji_flags.txt";
+            string path = Path.Combine(Environment.CurrentDirectory, @"Services\Resources\", fileName);
+            string[] emojis = File.ReadAllLines(path);
+            foreach (var port in ports.Ports)
+            {
+                foreach (var line in emojis)
+                {
+                    if (line.Contains(port.countryName))
+                    {
+                        port.emoji = line.Split(':')[0].Trim();
+                    }
+                }
+            }
             Root root = new();
+            root.Vessels = vessels.Vessels;
+            root.Ports = ports.Ports;
+            MemoryCache.Default["root"] = root;
+            return root;
+
+            /*Root root = new();
             root = MemoryCache.Default["root"] as Root;
             if (root == null)
             {
@@ -227,7 +248,7 @@ namespace TelegramBotWebApp.Services.Resources
                 root.Ports = ports.Ports;
                 MemoryCache.Default["root"] = root;
             }
-            return root;
+            return root;*/
         }
         public Root ParseActiveVesselsFromJson()
         {
