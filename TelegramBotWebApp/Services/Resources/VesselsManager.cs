@@ -289,7 +289,7 @@ namespace TelegramBotWebApp.Services.Resources
 
         public Ship GetShipFromActive(string name)
         {
-            Root root = (Root)MemoryCache.Default["Root"];
+            Root root = GetRoot();
             foreach (var ship in root.Vessels)
             {
                 if (ship.ShipName.Contains(name))
@@ -301,7 +301,7 @@ namespace TelegramBotWebApp.Services.Resources
         }
         public Port GetPortFromActive(string name)
         {
-            Root root = (Root)MemoryCache.Default["Root"];
+            Root root = GetRoot();
             foreach (var port in root.Ports)
             {
                 if (port.portName.Contains(name))
