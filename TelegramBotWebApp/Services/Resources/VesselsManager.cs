@@ -316,7 +316,7 @@ namespace TelegramBotWebApp.Services.Resources
             Root root = GetRoot();
             foreach (var ship in root.Vessels)
             {
-                if (ship.ShipName.Contains(name))
+                if (ship.ShipName.Contains(name.ToUpper()))
                 {
                     return ship;
                 }

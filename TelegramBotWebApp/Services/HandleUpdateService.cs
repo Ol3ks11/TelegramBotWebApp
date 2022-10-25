@@ -94,9 +94,9 @@ public class HandleUpdateService
     }
     private async Task BotOnMessageReceived(Update update, Chat chat)
     {
-        ToLogRecievedMsg(update);
-        
         UserSet user = ParsePinnedMsg(update).Result;
+        ToLogRecievedMsg(update,user);
+        
 
         if (update.Message.Type != MessageType.Text)
             return;
@@ -363,7 +363,7 @@ public class HandleUpdateService
         if (settings[1].Split(':')[0].Trim()[1] == '✅')
         {
             userPort.portName = settings[1].Split(',')[0].Split(':')[1].Trim();
-            userPort.GeoId = settings[1].Split(',')[0].Trim();
+            userPort.GeoId = settings[1].Split(',')[1].Trim();
         }
 
         user.VesselTarget = userShip;
@@ -425,11 +425,12 @@ public class HandleUpdateService
         _logger.LogInformation("HandleError: {ErrorMessage}", ErrorMessage);
         return Task.CompletedTask;
     }
-    private void ToLogRecievedMsg(Update update)
+    private void ToLogRecievedMsg(Update update, UserSet user)
     {
         _logger.LogInformation("\n Receive message type: {message.Type}", update.Message.Type);
         _logger.LogInformation("\n From: {message.From.FirstName} {message.From.LastName}", update.Message.From.FirstName, update.Message.From.LastName);
         _logger.LogInformation("\n MessageText: {message.Text}", update.Message.Text);
+        _logger.LogInformation("\n UserSettings: {shipName} {shipCode} {portName}", user.VesselTarget.ShipName,user.VesselTarget.ShipCode,user.PortTarget.portName);
     }
     private void ToLogSentMsg(Message sentMessage)
     {
