@@ -203,7 +203,8 @@ namespace TelegramBotWebApp.Services.Resources
         }
         public Root GetRoot()
         {
-            Root root = (Root)MemoryCache.Default["root"];
+            Root root = new();
+            root = (Root)MemoryCache.Default["root"];
             if (root == null)
             {
                 Root vessels = ParseActiveVesselsFromJson();
