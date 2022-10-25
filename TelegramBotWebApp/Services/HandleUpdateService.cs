@@ -240,7 +240,7 @@ public class HandleUpdateService
 
         async Task<Message> SendShipSchedule()
         {
-            Ship ship = user.VesselTarget;
+            Ship ship = user.VesselTarget; 
             ship = vesselManager.UpdateShipPorts(ship);
             List<string> schedule = vesselManager.BuildSchedule(ship,user);
             for (int i=0;i<schedule.Count-1;i++)

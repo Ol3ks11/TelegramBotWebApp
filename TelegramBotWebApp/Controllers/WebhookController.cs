@@ -17,11 +17,6 @@ public class WebhookController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post([FromServices] HandleUpdateService handleUpdateService, [FromBody] Update update)
     {
-        var conString = _configuration.GetValue<string>("ConnectionStrings:MyConString");
-        SqlManager sqlManager = new();
-                   sqlManager.SetupConnectionString(conString);
-
-              handleUpdateService.SetupSqlManager(sqlManager);
         await handleUpdateService.EchoAsync(update);
         return Ok();
     }
