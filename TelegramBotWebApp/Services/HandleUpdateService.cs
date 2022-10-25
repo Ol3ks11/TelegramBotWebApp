@@ -44,7 +44,7 @@ public class HandleUpdateService
 
     private async Task BotOnCallBackReceived(Update update, Chat chat)
     {
-        UserSet user = ParsePinnedMsg(update, chat);
+        UserSet user = ParsePinnedMsg(update);
         //Chat chat = update.CallbackQuery.Message.Chat;
         if (update.CallbackQuery != null)
         {
@@ -122,7 +122,7 @@ public class HandleUpdateService
 
         async Task<Message> Start(ITelegramBotClient bot)
         {
-            SetPinnedMsg(update, chat);
+            SetPinnedMsg(chat);
             StringBuilder builder = new();
             builder.AppendLine("Welcome to Maersk Schedule Bot!");
             builder.AppendLine("You can get vessels schedule or ports schedule here.");
