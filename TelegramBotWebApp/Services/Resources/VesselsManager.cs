@@ -1,27 +1,27 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
+using System.Runtime.Caching;
 
 namespace TelegramBotWebApp.Services.Resources
 {
     public class VesselsManager
     {
-        public Ship UpdateShipPorts(Ship ship, SqlManager sqlManager)
+        public Ship UpdateShipPorts(Ship ship)
         {
             Ship temp = new();
-            //populate temp.Ports list from API
             temp = JsonConvert.DeserializeObject<Ship>(GetPortsJson(ship).Result);
-            //finalize all fields in temp
             temp.ShipName = ship.ShipName;
             temp.ShipCode = ship.ShipCode;
             ship = temp;
-            //get all data which is missing in API from DB
-            for (int i = 0; i < ship.Ports.Count; i++)
+            Root root = (Root)MemoryCache.Default["Root"];
+            foreach (var port in ship.Ports)
             {
-                Port checkedPort = sqlManager.GetPortFromDbByName(ship.Ports[i].portName);
-                if (ship.Ports[i].portName == checkedPort.portName)
+                foreach (var rootport in root.Ports)
                 {
-                    ship.Ports[i].emoji        = checkedPort.emoji;
-                    ship.Ports[i].countryName  = checkedPort.countryName;
+                    if (port.portName == rootport.portName)
+                    {
+                        port.emoji = rootport.emoji;
+                    }
                 }
             }
             return ship;
@@ -33,8 +33,6 @@ namespace TelegramBotWebApp.Services.Resources
             temp = JsonConvert.DeserializeObject<Port>(GetShipsJson(port).Result);
             //finalize all fields in temp
             temp.portName = port.portName;
-            temp.countryName = port.countryName;
-            temp.emoji = port.emoji;
             temp.GeoId = port.GeoId;
             port = temp;
             return port;
@@ -202,6 +200,111 @@ namespace TelegramBotWebApp.Services.Resources
             }
             result.Add(builder.ToString());
             return result;
+        }
+        public Root GetRoot()
+        {
+            Root vessels = ParseActiveVesselsFromJson();
+            Root ports = ParseActivePortsFromJson();
+            string[] emojis = File.ReadAllLines(@"\Resources\emoji_flags.txt");
+            foreach (var port in ports.Ports)
+            {
+                foreach (var line in emojis)
+                {
+                    if (line.Contains(port.countryName))
+                    {
+                        port.emoji = line.Split(':')[0].Trim();
+                    }
+                }
+            }
+            Root final = new();
+            final.Vessels = vessels.Vessels;
+            final.Ports = ports.Ports;
+            return final;
+        }
+        public Root ParseActiveVesselsFromJson()
+        {
+            Root root = new();
+            root = JsonConvert.DeserializeObject<Root>(GetActiveVessels().Result);
+            return root;
+        }
+        private async Task<string> GetActiveVessels()
+        {
+            HttpRequestMessage requestForPortsList = new();
+            string getPortsURL = "https://api.maerskline.com/maeu/schedules/vessel/active";
+            requestForPortsList.RequestUri = new Uri(getPortsURL);
+            HttpClient client = new();
+            try
+            {
+                var maerskResponse = await client.SendAsync(requestForPortsList);
+                string stringMaerskResponse = await maerskResponse.Content.ReadAsStringAsync();
+                stringMaerskResponse = stringMaerskResponse.Replace("code", "vesselCode");
+                stringMaerskResponse = stringMaerskResponse.Replace("name", "vessel");
+                return stringMaerskResponse;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            finally
+            {
+                client.Dispose();
+            }
+            return null;
+        }
+        public Root ParseActivePortsFromJson()
+        {
+            Root root = new();
+            root = JsonConvert.DeserializeObject<Root>(GetActivePorts().Result);
+            return root;
+        }
+        private async Task<string> GetActivePorts()
+        {
+            HttpRequestMessage requestForPortsList = new();
+            string getPortsURL = "https://api.maerskline.com/maeu/schedules/port/active";
+            requestForPortsList.RequestUri = new Uri(getPortsURL);
+            HttpClient client = new();
+            try
+            {
+                var maerskResponse = await client.SendAsync(requestForPortsList);
+                string stringMaerskResponse = await maerskResponse.Content.ReadAsStringAsync();
+                stringMaerskResponse = stringMaerskResponse.Replace("locationName", "port");
+                stringMaerskResponse = stringMaerskResponse.Replace("geoId", "portGeoId");
+                return stringMaerskResponse;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            finally
+            {
+                client.Dispose();
+            }
+            return null;
+        }
+
+        public Ship GetShipFromActive(string name)
+        {
+            Root root = (Root)MemoryCache.Default["Root"];
+            foreach (var ship in root.Vessels)
+            {
+                if (ship.ShipName.Contains(name))
+                {
+                    return ship;
+                }
+            }
+            return null;
+        }
+        public Port GetPortFromActive(string name)
+        {
+            Root root = (Root)MemoryCache.Default["Root"];
+            foreach (var port in root.Ports)
+            {
+                if (port.portName.Contains(name))
+                {
+                    return port;
+                }
+            }
+            return null;
         }
     }
 }

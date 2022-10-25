@@ -1,6 +1,8 @@
 using Telegram.Bot;
 using Telegram.Bot.Examples.WebHook;
 using Telegram.Bot.Examples.WebHook.Services;
+using System.Runtime.Caching;
+using TelegramBotWebApp.Services.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
@@ -12,10 +14,12 @@ builder.Services.AddHttpClient("tgwebhook")
 builder.Services.AddScoped<HandleUpdateService>();
 builder.Services.AddControllers().AddNewtonsoftJson();
 
+VesselsManager vesselsManager = new();
+MemoryCache.Default["Root"] = vesselsManager.GetRoot();
+
 var app = builder.Build();
 app.UseRouting();
 app.UseCors();
-
 app.UseEndpoints(endpoints =>
 {
     var token = botConfig.BotToken;
@@ -24,5 +28,4 @@ app.UseEndpoints(endpoints =>
                                  new { controller = "Webhook", action = "Post" });
     endpoints.MapControllers();
 });
-
 app.Run();
