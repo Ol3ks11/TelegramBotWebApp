@@ -98,6 +98,7 @@ public class HandleUpdateService
 
         if (IsPinMsgLegit(chat) == false)
         {
+            await _botClient.UnpinAllChatMessages(chat.Id);
             await SetPinnedMsg(chat);
         }
         UserSet user = ParsePinnedMsg(update);
@@ -122,7 +123,7 @@ public class HandleUpdateService
 
         async Task<Message> Start(ITelegramBotClient bot)
         {
-            await SetPinnedMsg(chat);
+            //await SetPinnedMsg(chat);
             StringBuilder builder = new();
             builder.AppendLine("Welcome to Maersk Schedule Bot!");
             builder.AppendLine("You can get vessels schedule or ports schedule here.");
@@ -376,7 +377,6 @@ public class HandleUpdateService
 
     private async Task SetPinnedMsg(Chat chat)
     {
-        await _botClient.UnpinAllChatMessages(chat.Id);
         var message = await _botClient.SendTextMessageAsync(chat.Id, "🛳🚫: Name, Code; 🏭🚫: Name, GeoId; 📅:⬇️");
         await _botClient.PinChatMessageAsync(chat.Id, message.MessageId);
     }
