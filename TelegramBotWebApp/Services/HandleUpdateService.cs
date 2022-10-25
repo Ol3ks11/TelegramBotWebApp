@@ -377,8 +377,8 @@ public class HandleUpdateService
     private async Task SetPinnedMsg(Chat chat)
     {
         await _botClient.UnpinAllChatMessages(chat.Id);
-        var message = _botClient.SendTextMessageAsync(chat.Id, "🛳🚫: Name, Code; 🏭🚫: Name, GeoId; 📅:⬇️");
-        await _botClient.PinChatMessageAsync(chat.Id, message.Id);
+        var message = await _botClient.SendTextMessageAsync(chat.Id, "🛳🚫: Name, Code; 🏭🚫: Name, GeoId; 📅:⬇️");
+        await _botClient.PinChatMessageAsync(chat.Id, message.MessageId);
     }
 
     private bool IsPinMsgLegit(Chat chat)
