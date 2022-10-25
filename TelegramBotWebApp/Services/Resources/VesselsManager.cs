@@ -208,7 +208,9 @@ namespace TelegramBotWebApp.Services.Resources
             {
                 Root vessels = ParseActiveVesselsFromJson();
                 Root ports = ParseActivePortsFromJson();
-                string[] emojis = File.ReadAllLines(@"\Resources\emoji_flags.txt");
+                string fileName = "emoji_flags.txt";
+                string path = Path.Combine(Environment.CurrentDirectory, @"Services\Resources\", fileName);
+                string[] emojis = File.ReadAllLines(path);
                 foreach (var port in ports.Ports)
                 {
                     foreach (var line in emojis)
