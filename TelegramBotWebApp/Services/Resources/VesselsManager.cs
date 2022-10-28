@@ -207,7 +207,7 @@ namespace TelegramBotWebApp.Services.Resources
             {
                 foreach (var line in emojis)
                 {
-                    if (line.Contains(port.countryName))
+                    if (port.countryName.Contains(line.Split(':')[1].Trim()))
                     {
                         port.emoji = line.Split(':')[0].Trim();
                     }
@@ -216,7 +216,6 @@ namespace TelegramBotWebApp.Services.Resources
             Root root = new();
             root.Vessels = vessels.Vessels;
             root.Ports = ports.Ports;
-            MemoryCache.Default["root"] = root;
             return root;
 
             /*Root root = new();
