@@ -14,8 +14,9 @@ builder.Services.AddHttpClient("tgwebhook")
 builder.Services.AddScoped<HandleUpdateService>();
 builder.Services.AddControllers().AddNewtonsoftJson();
 
-//VesselsManager vesselsManager = new();
-//MemoryCache.Default["Root"] = vesselsManager.GetRoot();
+VesselsManager vesselsManager = new();
+Root root = vesselsManager.GetRoot();
+builder.Services.AddSingleton<Root>(root);
 
 var app = builder.Build();
 app.UseRouting();

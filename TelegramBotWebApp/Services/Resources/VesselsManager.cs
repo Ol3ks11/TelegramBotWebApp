@@ -6,14 +6,12 @@ namespace TelegramBotWebApp.Services.Resources
 {
     public class VesselsManager
     {
-        public Ship UpdateShipPorts(Ship ship)
+        public Ship UpdateShipPorts(Ship ship, Root root)
         {
-            Ship temp = new();
-            temp = JsonConvert.DeserializeObject<Ship>(GetPortsJson(ship).Result);
+            Ship temp = JsonConvert.DeserializeObject<Ship>(GetPortsJson(ship).Result);
             temp.ShipName = ship.ShipName;
             temp.ShipCode = ship.ShipCode;
             ship = temp;
-            Root root = GetRoot();
             foreach (var port in ship.Ports)
             {
                 foreach (var rootport in root.Ports)
@@ -28,10 +26,7 @@ namespace TelegramBotWebApp.Services.Resources
         }
         public Port UpdatePortShips(Port port)
         {
-            Port temp = new();
-            //populate temp.Vessels list from API
-            temp = JsonConvert.DeserializeObject<Port>(GetShipsJson(port).Result);
-            //finalize all fields in temp
+            Port temp = JsonConvert.DeserializeObject<Port>(GetShipsJson(port).Result);
             temp.portName = port.portName;
             temp.GeoId = port.GeoId;
             port = temp;
@@ -311,29 +306,29 @@ namespace TelegramBotWebApp.Services.Resources
             return null;
         }
 
-        public Ship GetShipFromActive(string name)
+        public List<Ship> GetShipFromActive(string name, Root root)
         {
-            Root root = GetRoot();
+            List<Ship> shipList = new();
             foreach (var ship in root.Vessels)
             {
                 if (ship.ShipName.Contains(name.ToUpper()))
                 {
-                    return ship;
+                    shipList.Add(ship);
                 }
             }
-            return null;
+            return shipList;
         }
-        public Port GetPortFromActive(string name)
+        public List<Port> GetPortFromActive(string name, Root root)
         {
-            Root root = GetRoot();
+            List<Port> portList = new();
             foreach (var port in root.Ports)
             {
-                if (port.portName.Contains(name))
+                if (port.portName.ToLower().Contains(name.ToLower()))
                 {
-                    return port;
+                    portList.Add(port);
                 }
             }
-            return null;
+            return portList;
         }
     }
 }
