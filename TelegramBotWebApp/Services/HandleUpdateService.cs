@@ -23,14 +23,14 @@ public class HandleUpdateService
     }
     public async Task EchoAsync(Update update, Root root)
     {
-        chat = GetChat(update).Result;
-        user = ParsePinnedMsg(update).Result;
+        //chat = GetChat(update).Result;
+        //user = ParsePinnedMsg(update).Result;
 
         var handler = update.Type switch
         {
-            UpdateType.Message            => BotOnMessageReceived(update, chat, root),
-            UpdateType.EditedMessage      => BotOnMessageReceived(update, chat, root),
-            UpdateType.CallbackQuery      => BotOnCallBackReceived(update, chat, root),
+            UpdateType.Message            => BotOnMessageReceived(update, root),
+            UpdateType.EditedMessage      => BotOnMessageReceived(update, root),
+            UpdateType.CallbackQuery      => BotOnCallBackReceived(update, root),
             _                             => UnknownUpdateHandlerAsync(update)
         };
 
@@ -46,10 +46,13 @@ public class HandleUpdateService
         }
     }
 
-    private async Task BotOnCallBackReceived(Update update, Chat chat, Root root)
+    private async Task BotOnCallBackReceived(Update update, Root root)
     {
         if (update.CallbackQuery != null)
         {
+            chat = GetChat(update).Result;
+            user = ParsePinnedMsg(update).Result;
+
             if (update.CallbackQuery.Data.Split(' ')[0] == "port")
             {
                 string portname = update.CallbackQuery.Data.Remove(0, 4).Trim();
@@ -98,8 +101,10 @@ public class HandleUpdateService
         }
 
     }
-    private async Task BotOnMessageReceived(Update update, Chat chat, Root root)
+    private async Task BotOnMessageReceived(Update update, Root root)
     {
+        chat = GetChat(update).Result;
+        user = ParsePinnedMsg(update).Result;
         ToLogRecievedMsg(update,user);
 
         if (update.Message.Type != MessageType.Text)
@@ -404,6 +409,7 @@ public class HandleUpdateService
     {
         if (update.CallbackQuery != null)
         {
+            update.
             return await _botClient.GetChatAsync(update.CallbackQuery.Message.Chat.Id);
         }
         return await _botClient.GetChatAsync(update.Message.Chat.Id);
