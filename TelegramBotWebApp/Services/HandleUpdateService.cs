@@ -409,7 +409,6 @@ public class HandleUpdateService
     {
         if (update.CallbackQuery != null)
         {
-            update.
             return await _botClient.GetChatAsync(update.CallbackQuery.Message.Chat.Id);
         }
         return await _botClient.GetChatAsync(update.Message.Chat.Id);
