@@ -21,4 +21,10 @@ public class WebhookController : ControllerBase
         await handleUpdateService.EchoAsync(update,root);
         return Ok();
     }
+
+    [HttpPost]
+    public ActionResult Send200()
+    {
+        return Ok();
+    }
 }
