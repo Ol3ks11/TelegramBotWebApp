@@ -22,7 +22,7 @@ public class WebhookController : ControllerBase
         return Ok();
     }
 
-    [HttpPost]
+    [HttpGet]
     public ActionResult Send200()
     {
         return StatusCode(200);

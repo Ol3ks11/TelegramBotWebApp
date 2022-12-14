@@ -27,10 +27,11 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllerRoute(name: "tgwebhook",
                                  pattern: $"bot/{token}",
                                  new { controller = "Webhook", action = "Post" });
-    /*endpoints.MapControllerRoute(name: "pingpoint",
+
+    endpoints.MapControllerRoute(name: "pingpoint",
                                  pattern: $"bot/ping",
                                  new { controller = "Webhook", action = "Send200" });
-    */
+
     endpoints.MapControllers();
 });
 app.Run();
