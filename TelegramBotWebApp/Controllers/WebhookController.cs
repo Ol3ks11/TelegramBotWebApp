@@ -25,6 +25,6 @@ public class WebhookController : ControllerBase
     [HttpPost]
     public ActionResult Send200()
     {
-        return Ok();
+        return StatusCode(200);
     }
 }
