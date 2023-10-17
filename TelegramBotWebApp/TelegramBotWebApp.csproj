@@ -17,4 +17,12 @@
     <PackageReference Include="Telegram.Bot" Version="18.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EditorConfigFiles Remove="D:\С#\TelegramBotWebApp\TelegramBotWebApp\Services\Resources\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="D:\С#\TelegramBotWebApp\TelegramBotWebApp\Services\Resources\.editorconfig" />
+  </ItemGroup>
+
 </Project>
