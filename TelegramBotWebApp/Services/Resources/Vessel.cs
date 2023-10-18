@@ -32,7 +32,7 @@ public class Vessel
         }
     }
 
-    private async Task<string> GetScheduleJson(string comsumerKey)
+    private async Task<string> GetScheduleJson(string consumerKey)
     {
         DateTime todayDate = DateTime.Today;
         string today = todayDate.ToString("yyyy-MM-dd");
@@ -42,7 +42,7 @@ public class Vessel
                              +carrierVesselCode+"&fromDate="+today+"&toDate="+plus90+"&carrierCodes=MAEU%2CMCPU%2CSEAU%2CSEJJ";
         request.RequestUri = new Uri(getPortsURL);
         request.Headers.Add("Accept", "application/json");
-        request.Headers.Add("Consumer-Key", "Ilg7HaY2scaKhSWT4gBfl5TkOp0L3YXn");
+        request.Headers.Add("Consumer-Key", @$"{consumerKey}");
         HttpClient client = new();
         try
         {

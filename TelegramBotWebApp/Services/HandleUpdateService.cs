@@ -11,20 +11,17 @@ namespace Telegram.Bot.Examples.WebHook.Services;
 
 public class HandleUpdateService
 {
-    private readonly IConfiguration _configuration;
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<HandleUpdateService> _logger;
+    private readonly BotConfiguration _botConfig;
     private UserSet user = new();
     private Chat chat = new();
     private VesselsManager vesselManager;
-    private string _consumerKey;
     public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger, IConfiguration configuration)
     {
         _botClient = botClient;
         _logger = logger;
-        _configuration = configuration;
-        _consumerKey = _configuration.GetSection("BotConfiguration").GetValue<string>("ConsumerKey");
-        Console.WriteLine(_consumerKey);
+        _botConfig = configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
     }
     public async Task EchoAsync(Update update)
     {
@@ -59,7 +56,7 @@ public class HandleUpdateService
 
             if (update.CallbackQuery != null)
             {
-                List<Vessel> ships = vesselManager.GetMatchingVesselsFrActive(update.CallbackQuery.Data, _consumerKey);
+                List<Vessel> ships = vesselManager.GetMatchingVesselsFrActive(update.CallbackQuery.Data, _botConfig.ConsumerKey);
                 Vessel ship = ships.Where(x => x.vesselName.Equals(update.CallbackQuery.Data)).First();
                 await _botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id, $"🛳 {ship.vesselName}");
                 await EditPinnedShip(ship);
@@ -189,7 +186,7 @@ public class HandleUpdateService
         async Task<Message> SendShipSchedule()
         {
             Vessel vessel = user.targetVessel;
-            vessel.GetSchedule(_consumerKey);
+            vessel.GetSchedule(_botConfig.ConsumerKey);
             List<string> schedule = vesselManager.BuildSchedule(vessel.schedule, user);
             for (int i = 0; i < schedule.Count - 1; i++)
             {
@@ -200,7 +197,7 @@ public class HandleUpdateService
 
         async Task<Message> CheckIfNameLegit(ITelegramBotClient bot)
         {
-            List<Vessel> shipList = vesselManager.GetMatchingVesselsFrActive(update.Message.Text, _consumerKey);
+            List<Vessel> shipList = vesselManager.GetMatchingVesselsFrActive(update.Message.Text, _botConfig.ConsumerKey);
             List<List<InlineKeyboardButton>> keyboard = new();
 
             foreach (var ship in shipList)
@@ -325,7 +322,7 @@ public class HandleUpdateService
         _logger.LogInformation("\n Receive message type: {message.Type}", update.Message.Type);
         _logger.LogInformation("\n From: {message.From.FirstName} {message.From.LastName}", update.Message.From.FirstName, update.Message.From.LastName);
         _logger.LogInformation("\n MessageText: {message.Text}", update.Message.Text);
-        _logger.LogInformation("\n MessageText: {_consumerKey}", _consumerKey);
+        _logger.LogInformation("\n MessageText: {_consumerKey}", _botConfig.ConsumerKey);
     }
     private void ToLogSentMsg(Message sentMessage)
     {
