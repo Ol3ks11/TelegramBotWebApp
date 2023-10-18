@@ -42,7 +42,7 @@ public class Vessel
                              +carrierVesselCode+"&fromDate="+today+"&toDate="+plus90+"&carrierCodes=MAEU%2CMCPU%2CSEAU%2CSEJJ";
         request.RequestUri = new Uri(getPortsURL);
         request.Headers.Add("Accept", "application/json");
-        request.Headers.Add("Consumer-Key", @$"{consumerKey}");
+        request.Headers.Add("Consumer-Key", consumerKey);
         HttpClient client = new();
         try
         {

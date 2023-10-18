@@ -90,7 +90,7 @@ namespace TelegramBotWebApp
             string getPortsURL = "https://api.maersk.com/schedules/active-vessels";
             request.RequestUri = new Uri(getPortsURL);
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("Consumer-Key", @$"{consumerKey}");
+            request.Headers.Add("Consumer-Key", consumerKey);
             HttpClient client = new();
             try
             {

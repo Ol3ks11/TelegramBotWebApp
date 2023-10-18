@@ -198,6 +198,7 @@ public class HandleUpdateService
         async Task<Message> CheckIfNameLegit(ITelegramBotClient bot)
         {
             List<Vessel> shipList = vesselManager.GetMatchingVesselsFrActive(update.Message.Text, _botConfig.ConsumerKey);
+            _logger.LogInformation("\n MessageText: {shipList.count}", shipList.Count);
             List<List<InlineKeyboardButton>> keyboard = new();
 
             foreach (var ship in shipList)
