@@ -23,7 +23,8 @@ public class HandleUpdateService
         _botClient = botClient;
         _logger = logger;
         _configuration = configuration;
-        _consumerKey = _configuration.GetValue<string>("ConsumerKey");
+        _consumerKey = _configuration.GetSection("BotConfiguration").GetValue<string>("ConsumerKey");
+        Console.WriteLine(_consumerKey);
     }
     public async Task EchoAsync(Update update)
     {
