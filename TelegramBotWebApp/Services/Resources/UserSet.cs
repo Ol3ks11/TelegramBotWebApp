@@ -1,5 +1,9 @@
-﻿public class UserSet
+﻿namespace TelegramBotWebApp.Services.Resources
 {
-    public Vessel targetVessel { get; set; }
-    public bool PrintAscending { get; set; }
+    public class UserSet
+    {
+        public Ship VesselTarget { get; set; }
+        public Port PortTarget { get; set; }
+        public bool PrintAscending { get; set; }
+    }
 }

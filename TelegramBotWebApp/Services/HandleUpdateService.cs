@@ -1,40 +1,36 @@
 ﻿using System;
-using System.Configuration;
 using System.Text;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
-using TelegramBotWebApp;
+using TelegramBotWebApp.Services.Resources;
 
 namespace Telegram.Bot.Examples.WebHook.Services;
 
 public class HandleUpdateService
 {
-    private readonly IConfiguration _configuration;
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<HandleUpdateService> _logger;
+    private VesselsManager vesselManager = new();
     private UserSet user = new();
     private Chat chat = new();
-    private VesselsManager vesselManager;
-    private string _consumerKey;
-    public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger, IConfiguration configuration)
+    public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger)
     {
         _botClient = botClient;
         _logger = logger;
-        _configuration = configuration;
-        _consumerKey = _configuration.GetValue<string>("ConsumerKey");
+        
     }
-    public async Task EchoAsync(Update update)
+    public async Task EchoAsync(Update update, Root root)
     {
         //chat = GetChat(update).Result;
         //user = ParsePinnedMsg(update).Result;
 
         var handler = update.Type switch
         {
-            UpdateType.Message            => BotOnMessageReceived(update),
-            UpdateType.EditedMessage      => BotOnMessageReceived(update),
-            UpdateType.CallbackQuery      => BotOnCallBackReceived(update),
+            UpdateType.Message            => BotOnMessageReceived(update, root),
+            UpdateType.EditedMessage      => BotOnMessageReceived(update, root),
+            UpdateType.CallbackQuery      => BotOnCallBackReceived(update, root),
             _                             => UnknownUpdateHandlerAsync(update)
         };
 
@@ -49,36 +45,63 @@ public class HandleUpdateService
             await HandleErrorAsync(exception);
         }
     }
-    private async Task BotOnCallBackReceived(Update update)
+
+    private async Task BotOnCallBackReceived(Update update, Root root)
     {
         if (update.CallbackQuery != null)
         {
             chat = GetChat(update).Result;
             user = ParsePinnedMsg(update).Result;
 
-            if (update.CallbackQuery != null)
+            if (update.CallbackQuery.Data.Split(' ')[0] == "port")
             {
-                List<Vessel> ships = vesselManager.GetMatchingVesselsFrActive(update.CallbackQuery.Data, _consumerKey);
-                Vessel ship = ships.Where(x => x.vesselName.Equals(update.CallbackQuery.Data)).First();
-                await _botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id, $"🛳 {ship.vesselName}");
+                string portname = update.CallbackQuery.Data.Remove(0, 4).Trim();
+                List<Port> ports = vesselManager.GetPortFromActive(portname, root);
+                Port port = ports.Where(x => x.portName.Equals(portname)).First();
+                await _botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id, $"🏭 {port.emoji}{port.portName}");
+                await EditPinnedPort(port);
+                await _botClient.SendTextMessageAsync(chat.Id, $"🏭 {port.emoji}{port.portName}");
+                await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_port to recieve a schedule. 📅");
+            }
+            else
+            {
+                List<Ship> ships = vesselManager.GetShipFromActive(update.CallbackQuery.Data, root);
+                Ship ship = ships.Where(x => x.ShipName.Equals(update.CallbackQuery.Data)).First();
+                await _botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id, $"🛳 {ship.ShipName}");
                 await EditPinnedShip(ship);
-                await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.vesselName}");
+                await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.ShipName}");
                 await _botClient.SendTextMessageAsync(chat.Id, "🔄 Please enter /refresh_ship to recieve a schedule. 📅");
             }
-
-            async Task<Message> EditPinnedShip(Vessel ship)
-            {
-                //Message pindMsg = GetChat(update).Result.PinnedMessage;
-                Message pindMsg = chat.PinnedMessage;
-                string[] pinnedMsg = pindMsg.Text.Split(';');
-                StringBuilder builder = new();
-                builder.Append($"🛳✅: {ship.vesselName},{ship.carrierVesselCode};");
-                builder.Append($"{pinnedMsg[1]}");
-                return await _botClient.EditMessageTextAsync(chat.Id, pindMsg.MessageId, builder.ToString());
-            }
         }
+
+        async Task<Message> EditPinnedShip(Ship ship)
+        {
+            //Message pindMsg = GetChat(update).Result.PinnedMessage;
+            Message pindMsg = chat.PinnedMessage;
+            string[] pinnedMsg = pindMsg.Text.Split(';');
+            StringBuilder builder = new();
+            builder.Append($"🛳✅: {ship.ShipName},{ship.ShipCode};");
+            builder.Append($"{pinnedMsg[1]};");
+            builder.Append($"{pinnedMsg[2]}");
+
+            return await _botClient.EditMessageTextAsync(chat.Id, pindMsg.MessageId, builder.ToString());
+        }
+
+        async Task<Message> EditPinnedPort(Port port)
+        {
+            //Message pindMsg = GetChat(update).Result.PinnedMessage;
+            Message pindMsg = chat.PinnedMessage;
+            string[] pinnedMsg = pindMsg.Text.Split(';');
+            StringBuilder builder = new();
+            builder.Append($"{pinnedMsg[0]};");
+            builder.Append($"🏭✅: {port.portName},{port.GeoId};");
+            builder.Append($"{pinnedMsg[2]}");
+
+            return await _botClient.EditMessageTextAsync(chat.Id, pindMsg.MessageId, builder.ToString());
+        }
+
     }
-    private async Task BotOnMessageReceived(Update update)
+    private async Task BotOnMessageReceived(Update update, Root root)
     {
         chat = GetChat(update).Result;
         user = ParsePinnedMsg(update).Result;
@@ -93,7 +116,7 @@ public class HandleUpdateService
             "/help"             => GetHelp(_botClient),
 
             "/refresh_ship"     => RefreshShip(_botClient),
-          //"/refresh_port"     => RefreshPort(_botClient),
+            "/refresh_port"     => RefreshPort(_botClient),
 
             "/order_descending" => ChangePrintOrder(_botClient,0),
             "/order_ascending"  => ChangePrintOrder(_botClient,1),
@@ -114,9 +137,9 @@ public class HandleUpdateService
         async Task<Message> GetStatus(ITelegramBotClient bot)
         {
             StringBuilder builder = new();
-            if (user.targetVessel != null)
+            if (user.VesselTarget != null)
             {
-                builder.AppendLine($"🛳✅ Your target vessel is - {user.targetVessel.vesselName}");
+                builder.AppendLine($"🛳✅ Your target vessel is - {user.VesselTarget.ShipName}");
                 builder.AppendLine($"🛳🔄 Enter /refresh_ship to get ship schedule.");
                 builder.AppendLine($"To re-set target vessel, just enter another name.");
                 builder.AppendLine();
@@ -125,6 +148,19 @@ public class HandleUpdateService
             {
                 builder.AppendLine($"🛳❌Your target vessel is missing.");
                 builder.AppendLine("Please enter vessel name to set it up.");
+                builder.AppendLine();
+            }
+            if (user.PortTarget != null)
+            {
+                builder.AppendLine($"🏭✅ Your target port is - {user.PortTarget.portName}");
+                builder.AppendLine($"🏭🔄 Enter /refresh_port to get port schedule.");
+                builder.AppendLine($"To re-set target port, just enter another name.");
+                builder.AppendLine();
+            }
+            else
+            {
+                builder.AppendLine($"🏭❌ Your target port is missing.");
+                builder.AppendLine("Please enter port name to set it up.");
                 builder.AppendLine();
             }
             if (user.PrintAscending == true)
@@ -138,7 +174,7 @@ public class HandleUpdateService
                 builder.AppendLine($"📅 Schedule will be printed in <b>descending order</b> ⬆️ <i>(from bottom to top)</i>.");
                 builder.AppendLine($"/order_ascending to change order to ascending (from top to bottom).");
             }
-            return await _botClient.SendTextMessageAsync(chat, builder.ToString(), ParseMode.Html);
+            return await bot.SendTextMessageAsync(chat, builder.ToString(), ParseMode.Html);
         }
 
         async Task<Message> GetHelp(ITelegramBotClient bot)
@@ -148,6 +184,9 @@ public class HandleUpdateService
             builder.AppendLine();
             builder.AppendLine($"🛳🔄 Enter /refresh_ship to get ship schedule.");
             builder.AppendLine($"To re-set target vessel, just enter another name.");
+            builder.AppendLine();
+            builder.AppendLine($"🏭🔄 Enter /refresh_port to get port schedule.");
+            builder.AppendLine($"To re-set target port, just enter another name.");
             builder.AppendLine();
             builder.AppendLine($"Enter /order_descending to change print order to descending.");
             builder.AppendLine($"Descending - Nearest date is last.");
@@ -175,7 +214,7 @@ public class HandleUpdateService
 
         async Task<Message> RefreshShip(ITelegramBotClient bot)
         {
-            if (user.targetVessel == null)
+            if (user.VesselTarget == null)
             {
                 return await _botClient.SendTextMessageAsync(chat, "⚓️ Your target vessel is missing, enter vessel name first. ⚓️");
             }
@@ -185,11 +224,35 @@ public class HandleUpdateService
             }
         }
 
+        async Task<Message> RefreshPort(ITelegramBotClient bot)
+        {
+            if (user.PortTarget == null)
+            {
+                return await _botClient.SendTextMessageAsync(chat, "🌉 Your target port is missing, enter port name with PORT keyword at start.. 🌉");
+            }
+            else
+            {
+                return await SendPortSchedule();
+            }
+        }
+
         async Task<Message> SendShipSchedule()
         {
-            Vessel vessel = user.targetVessel;
-            vessel.GetSchedule(_consumerKey);
-            List<string> schedule = vesselManager.BuildSchedule(vessel.schedule, user);
+            Ship ship = user.VesselTarget; 
+            ship = vesselManager.UpdateShipPorts(ship, root);
+            List<string> schedule = vesselManager.BuildSchedule(ship,user);
+            for (int i=0;i<schedule.Count-1;i++)
+            {
+                await _botClient.SendTextMessageAsync(chat.Id, schedule[i], ParseMode.Html);
+            }
+            return await _botClient.SendTextMessageAsync(chat.Id, schedule[schedule.Count - 1], ParseMode.Html);
+        }
+
+        async Task<Message> SendPortSchedule()
+        {
+            Port port = user.PortTarget;
+            port = vesselManager.UpdatePortShips(port);
+            List<string> schedule = vesselManager.BuildSchedule(port,user);
             for (int i = 0; i < schedule.Count - 1; i++)
             {
                 await _botClient.SendTextMessageAsync(chat.Id, schedule[i], ParseMode.Html);
@@ -199,13 +262,22 @@ public class HandleUpdateService
 
         async Task<Message> CheckIfNameLegit(ITelegramBotClient bot)
         {
-            List<Vessel> shipList = vesselManager.GetMatchingVesselsFrActive(update.Message.Text, _consumerKey);
-            List<List<InlineKeyboardButton>> keyboard = new();
+            List<Port> portList = vesselManager.GetPortFromActive(update.Message.Text, root);
+            List<Ship> shipList = vesselManager.GetShipFromActive(update.Message.Text, root);
 
+            List<List<InlineKeyboardButton>> keyboard = new();
+            foreach (var port in portList)
+            {
+                InlineKeyboardButton portButton = new($"🏭 Port: {port.portName}{port.emoji}");
+                portButton.CallbackData = "port " + port.portName;
+                List<InlineKeyboardButton> row = new();
+                row.Add(portButton);
+                keyboard.Add(row);
+            }
             foreach (var ship in shipList)
             {
-                InlineKeyboardButton shipButton = new($"🛳 Ship: {ship.vesselName}");
-                shipButton.CallbackData = ship.vesselName;
+                InlineKeyboardButton shipButton = new($"🛳 Ship: {ship.ShipName}");
+                shipButton.CallbackData = ship.ShipName;
                 List<InlineKeyboardButton> row = new();
                 row.Add(shipButton);
                 keyboard.Add(row);
@@ -226,12 +298,37 @@ public class HandleUpdateService
             }
         }
 
+        async Task<Message> EditPinnedShip(Ship ship)
+        {
+            Message pindMsg = chat.PinnedMessage;
+            string[] pinnedMsg = chat.PinnedMessage.Text.Split(';');
+            StringBuilder builder = new();
+            builder.Append($"🛳✅: {ship.ShipName},{ship.ShipCode};");
+            builder.Append($"{pinnedMsg[1]};");
+            builder.Append($"{pinnedMsg[2]}");
+            
+            return await _botClient.EditMessageTextAsync(chat.Id,pindMsg.MessageId, builder.ToString());
+        }
+
+        async Task<Message> EditPinnedPort(Port port)
+        {
+            Message pindMsg = chat.PinnedMessage;
+            string[] pinnedMsg = chat.PinnedMessage.Text.Split(';');
+            StringBuilder builder = new();
+            builder.Append($"{pinnedMsg[0]};");
+            builder.Append($"🏭✅: {port.portName},{port.GeoId};");
+            builder.Append($"{pinnedMsg[2]}");
+
+            return await _botClient.EditMessageTextAsync(chat.Id, pindMsg.MessageId, builder.ToString());
+        }
+
         async Task<Message> EditPrintOrder(int option)
         {
             Message pindMsg = chat.PinnedMessage;
             string[] pinnedMsg = chat.PinnedMessage.Text.Split(';');
             StringBuilder builder = new();
             builder.Append($"{pinnedMsg[0]};");
+            builder.Append($"{pinnedMsg[1]};");
             if (option == 1)
             {
                 builder.Append($"📅:⬇️");
@@ -246,13 +343,15 @@ public class HandleUpdateService
     }
     private async Task<UserSet> ParsePinnedMsg(Update update)
     {
-        //pinned message format: "🛳✅: Vessel Name, Code; 📅: ⬇️/⬆️"
+        //pinned message format: "🛳✅: Vessel Name, Code; 🏭✅: Port Name, GeoId; 📅: ⬇️/⬆️"
         UserSet user = new();
+        //Chat chat = GetChat(update).Result;
         if (IsPinMsgLegit() == false)
         {
             //_logger.LogInformation("Pin Message is NOT legit");
             await _botClient.UnpinAllChatMessages(chat.Id);
-            user.targetVessel = null;
+            user.PortTarget = null;
+            user.VesselTarget = null;
             await SetPinnedMsg();
             return user;
         }
@@ -261,27 +360,37 @@ public class HandleUpdateService
 
         if (settings[0].Split(',')[0].Split(':')[0].Contains("✅"))
         {
-            Vessel userShip = new();
-            userShip.vesselName = settings[0].Split(',')[0].Split(':')[1].Trim();
-            userShip.carrierVesselCode = settings[0].Split(',')[1].Trim();
-            user.targetVessel = userShip;
+            Ship userShip = new();
+            userShip.ShipName = settings[0].Split(',')[0].Split(':')[1].Trim();
+            userShip.ShipCode = settings[0].Split(',')[1].Trim();
+            user.VesselTarget = userShip;
         }
 
-        if (settings[1].Split(':')[1].Trim() == "⬇️")
+        if (settings[1].Split(':')[0].Contains("✅"))
+        {
+            Port userPort = new();
+            userPort.portName = settings[1].Split(',')[0].Split(':')[1].Trim();
+            userPort.GeoId = settings[1].Split(',')[1].Trim();
+            user.PortTarget = userPort;
+        }
+
+        if (settings[2].Split(':')[1].Trim() == "⬇️")
         {
             user.PrintAscending = true;
         }
-        else if (settings[1].Split(':')[1].Trim() == "⬆️")
+        else if (settings[2].Split(':')[1].Trim() == "⬆️")
         {
             user.PrintAscending = false;
         }
         return user;
     }
+
     private async Task SetPinnedMsg()
     {
-        var message = await _botClient.SendTextMessageAsync(chat.Id, "🛳🚫: Name, Code; 📅:⬇️");
+        var message = await _botClient.SendTextMessageAsync(chat.Id, "🛳🚫: Name, Code; 🏭🚫: Name, GeoId; 📅:⬇️");
         await _botClient.PinChatMessageAsync(chat.Id, message.MessageId);
     }
+
     private bool IsPinMsgLegit()
     {
         if (chat.PinnedMessage == null)
@@ -289,12 +398,13 @@ public class HandleUpdateService
             return false;
         }
         string pinnedMsg = chat.PinnedMessage.Text;
-        if (pinnedMsg.Contains("🛳") && pinnedMsg.Contains("📅"))
+        if (pinnedMsg.Contains("🛳") && pinnedMsg.Contains("🏭") && pinnedMsg.Contains("📅"))
         {
             return true;
         }
         return false;
     }
+
     private async Task<Chat> GetChat(Update update)
     {
         if (update.CallbackQuery != null)
@@ -303,6 +413,7 @@ public class HandleUpdateService
         }
         return await _botClient.GetChatAsync(update.Message.Chat.Id);
     }
+
     private Task UnknownUpdateHandlerAsync(Update update)
     {
         _logger.LogInformation("Unknown update type: {UpdateType}", update.Type);

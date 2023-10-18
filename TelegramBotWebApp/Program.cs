@@ -1,10 +1,8 @@
-using Microsoft.Extensions.DependencyInjection;
 using Telegram.Bot;
 using Telegram.Bot.Examples.WebHook;
 using Telegram.Bot.Examples.WebHook.Services;
-using TelegramBotWebApp;
+using System.Runtime.Caching;
 using TelegramBotWebApp.Services.Resources;
-
 
 var builder = WebApplication.CreateBuilder(args);
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
@@ -16,9 +14,9 @@ builder.Services.AddHttpClient("tgwebhook")
 builder.Services.AddScoped<HandleUpdateService>();
 builder.Services.AddControllers().AddNewtonsoftJson();
 
-//VesselsManager vesselsManager = new();
-//Root root = vesselsManager.GetRoot();
-//builder.Services.AddSingleton<Root>(root);
+VesselsManager vesselsManager = new();
+Root root = vesselsManager.GetRoot();
+builder.Services.AddSingleton<Root>(root);
 
 var app = builder.Build();
 app.UseRouting();

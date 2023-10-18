@@ -1,100 +1,54 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
-using TelegramBotWebApp.Services.Resources;
-using Telegram.Bot.Requests.Abstractions;
-using Telegram.Bot.Examples.WebHook.Services;
-using Telegram.Bot.Examples.WebHook;
+using System.Runtime.Caching;
 
-namespace TelegramBotWebApp
+namespace TelegramBotWebApp.Services.Resources
 {
     public class VesselsManager
     {
-        public List<string> BuildSchedule(Schedule rootSchedule, UserSet user)
+        public Ship UpdateShipPorts(Ship ship, Root root)
         {
-            StringBuilder builder = new();
-            List<string> result = new();
-            builder.AppendLine($"Schedule for <b>{user.targetVessel.vesselName}</b>:");
-            builder.AppendLine();
-            if (user.PrintAscending == true)
+            Ship temp = JsonConvert.DeserializeObject<Ship>(GetPortsJson(ship).Result);
+            temp.ShipName = ship.ShipName;
+            temp.ShipCode = ship.ShipCode;
+            ship = temp;
+            foreach (var port in ship.Ports)
             {
-                for (int i = 0; i < rootSchedule.vesselCalls.Count; i++)
+                foreach (var rootport in root.Ports)
                 {
-                    string portEmoji = rootSchedule.vesselCalls[i].facility.emoji;
-                    string portName = rootSchedule.vesselCalls[i].facility.portName.ToUpper();
-                    string carrierTerminalCode = rootSchedule.vesselCalls[i].facility.carrierTerminalCode;
-
-                    builder.AppendLine($"<code>Port call:</code> {portEmoji} <b>{portName}</b>");
-                    builder.AppendLine($"<code>Terminal code:</code> <i>{carrierTerminalCode}</i>");
-
-                    for (int j = 0 ; j < rootSchedule.vesselCalls[i].callSchedules.Count; j++)
+                    if (port.portName == rootport.portName)
                     {
-                        string callEventType      = rootSchedule.vesselCalls[i].callSchedules[j].transportEventTypeCode.ToUpper();
-                        string callEventDateTime  = rootSchedule.vesselCalls[i].callSchedules[j].classifierDateTime.ToString("dd-MM-yyyy HH:mm");
-                        string callEventClassCode = rootSchedule.vesselCalls[i].callSchedules[j].eventClassifierCode.ToUpper();
-
-                        builder.AppendLine($"<code>{callEventType}:</code> {callEventDateTime} , {callEventClassCode}");
-                    }
-                    
-                    builder.AppendLine();
-
-                    if (builder.Length > 1800)
-                    {
-                        result.Add(builder.ToString());
-                        builder.Clear();
+                        port.emoji = rootport.emoji;
                     }
                 }
             }
-            else
-            {
-                for (int i = rootSchedule.vesselCalls.Count - 1; i >= 0; i--)
-                {
-                    string portEmoji = rootSchedule.vesselCalls[i].facility.emoji;
-                    string portName = rootSchedule.vesselCalls[i].facility.portName.ToUpper();
-                    string carrierTerminalCode = rootSchedule.vesselCalls[i].facility.carrierTerminalCode;
-
-                    builder.AppendLine($"<code>Port call:</code> {portEmoji} <b>{portName}</b>");
-                    builder.AppendLine($"<code>Terminal code:</code> <i>{carrierTerminalCode}</i>");
-
-                    for (int j = 0; j < rootSchedule.vesselCalls[i].callSchedules.Count; j++)
-                    {
-                        string callEventType = rootSchedule.vesselCalls[i].callSchedules[j].transportEventTypeCode.ToUpper();
-                        string callEventDateTime = rootSchedule.vesselCalls[i].callSchedules[j].classifierDateTime.ToString("dd-MM-yyyy HH:mm");
-                        string callEventClassCode = rootSchedule.vesselCalls[i].callSchedules[j].eventClassifierCode.ToUpper();
-
-                        builder.AppendLine($"<code>{callEventType}:</code> {callEventDateTime} , {callEventClassCode}");
-                    }
-
-                    builder.AppendLine();
-
-                    if (builder.Length > 1800)
-                    {
-                        result.Add(builder.ToString());
-                        builder.Clear();
-                    }
-                }
-            }
-            result.Add(builder.ToString());
-            return result;
+            return ship;
         }
-        public List<Vessel> GetActiveVesselsList(string consumerKey)
+        public Port UpdatePortShips(Port port)
         {
-            //RootActiveVessels vessels = new();
-            //vessels = JsonConvert.DeserializeObject<RootActiveVessels>(GetActiveVesselsJson().Result);
-            List<Vessel> activeVesselsList = JsonConvert.DeserializeObject<List<Vessel>>(GetActiveVesselsJson(consumerKey).Result);
-            return activeVesselsList;
-
+            Port temp = JsonConvert.DeserializeObject<Port>(GetShipsJson(port).Result);
+            temp.portName = port.portName;
+            temp.GeoId = port.GeoId;
+            port = temp;
+            return port;
         }
-        private async Task<string> GetActiveVesselsJson(string consumerKey)
+        private async Task<string> GetPortsJson(Ship ship)
         {
-            HttpRequestMessage request = new();
-            string getPortsURL = "https://api.maersk.com/schedules/active-vessels";
-            request.RequestUri = new Uri(getPortsURL);
-            request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("Consumer-Key", @$"{consumerKey}");
+            string fromDateStr = DateOnly.FromDateTime(DateTime.Now).ToString("yyyy-MM-dd");
+            string toDateStr = DateOnly.FromDateTime(DateTime.Now.AddDays(89)).ToString("yyyy-MM-dd");
+
+            HttpRequestMessage requestForPortsList = new();
+            string getPortsURL = "https://api.maerskline.com/maeu/schedules/vessel?vesselCode="
+                               + ship.ShipCode.Trim()
+                               + "&fromDate="
+                               + fromDateStr
+                               + "&toDate="
+                               + toDateStr;
+            requestForPortsList.RequestUri = new Uri(getPortsURL);
             HttpClient client = new();
             try
             {
-                var maerskResponse = await client.SendAsync(request);
+                var maerskResponse = await client.SendAsync(requestForPortsList);
                 string stringMaerskResponse = await maerskResponse.Content.ReadAsStringAsync();
                 return stringMaerskResponse;
             }
@@ -108,19 +62,272 @@ namespace TelegramBotWebApp
             }
             return null;
         }
-        public List<Vessel> GetMatchingVesselsFrActive(string name, string consumerKey)
+        private async Task<string> GetShipsJson(Port port)
         {
-            //RootActiveVessels root = GetActiveVesselsList();
-            List<Vessel> activeVesselsList = GetActiveVesselsList(consumerKey);
-            List<Vessel> matchingVesselsList = new();
-            foreach (var vessel in activeVesselsList)
+            string fromDateStr = DateOnly.FromDateTime(DateTime.Now).ToString("yyyy-MM-dd");
+            string toDateStr = DateOnly.FromDateTime(DateTime.Now.AddDays(14)).ToString("yyyy-MM-dd");
+
+            HttpRequestMessage requestForPortsList = new();
+            string getPortsURL = "https://api.maerskline.com/maeu/schedules/port?portGeoId="
+                               + port.GeoId.Trim()
+                               + "&fromDate="
+                               + fromDateStr
+                               + "&toDate="
+                               + toDateStr;
+            requestForPortsList.RequestUri = new Uri(getPortsURL);
+            HttpClient client = new();
+            try
             {
-                if (vessel.vesselName.Contains(name.ToUpper()))
+                var maerskResponse = await client.SendAsync(requestForPortsList);
+                string stringMaerskResponse = await maerskResponse.Content.ReadAsStringAsync();
+                return stringMaerskResponse;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            finally
+            {
+                client.Dispose();
+            }
+            return null;
+        }
+        public List<string> BuildSchedule(Ship ship, UserSet user)
+        {
+            StringBuilder builder = new();
+            List<string> result = new();
+            builder.AppendLine($"Schedule for <b>{ship.ShipName}</b>:");
+            builder.AppendLine();
+            if (user.PrintAscending == true)
+            {
+                for (int i = 0; i < ship.Ports.Count - 1; i++)
                 {
-                    matchingVesselsList.Add(vessel);
+                    string portEmoji = ship.Ports[i].emoji;
+                    string portName = ship.Ports[i].portName.ToUpper();
+                    string termName = ship.Ports[i].terminal;
+                    string arrival = ship.Ports[i].arrival.ToString("dd-MM-yyyy HH:mm");
+                    string departure = ship.Ports[i].departure.ToString("dd-MM-yyyy HH:mm");
+
+                    builder.AppendLine($"<code>Port call</code>: {portEmoji} <b>{portName}</b>");
+                    builder.AppendLine($"<code>Terminal:</code> <i>{termName}</i>");
+                    builder.AppendLine($"<code>ARR:</code> {arrival}");
+                    builder.AppendLine($"<code>DEP:</code> {departure}");
+                    builder.AppendLine();
+
+                    if (builder.Length > 1800)
+                    {
+                        result.Add(builder.ToString());
+                        builder.Clear();
+                    }
                 }
             }
-            return matchingVesselsList;
+            else
+            {
+                for (int i = ship.Ports.Count - 1; i >= 0; i--)
+                {
+                    string portEmoji = ship.Ports[i].emoji;
+                    string portName = ship.Ports[i].portName.ToUpper();
+                    string termName = ship.Ports[i].terminal;
+                    string arrival = ship.Ports[i].arrival.ToString("dd-MM-yyyy HH:mm");
+                    string departure = ship.Ports[i].departure.ToString("dd-MM-yyyy HH:mm");
+
+                    builder.AppendLine($"<code>Port call</code>: {portEmoji} <b>{portName}</b>");
+                    builder.AppendLine($"<code>Terminal:</code> <i>{termName}</i>");
+                    builder.AppendLine($"<code>ARR:</code> {arrival}");
+                    builder.AppendLine($"<code>DEP:</code> {departure}");
+                    builder.AppendLine();
+
+                    if (builder.Length > 1800)
+                    {
+                        result.Add(builder.ToString());
+                        builder.Clear();
+                    }
+                }
+            }
+            result.Add(builder.ToString());
+            return result;
+        }
+        public List<string> BuildSchedule(Port port, UserSet user)
+        {
+            StringBuilder builder = new();
+            List<string> result = new();
+            builder.AppendLine($"Schedule for {port.emoji}<b>{port.portName}</b>:");
+            builder.AppendLine();
+            if (user.PrintAscending == true)
+            {
+                for (int i = 0; i < port.Vessels.Count - 1; i++)
+                {
+                    string vesselName = port.Vessels[i].ShipName.ToUpper();
+                    string arrival = port.Vessels[i].Arrival.ToString("dd-MM-yyyy HH:mm");
+                    string departure = port.Vessels[i].Departure.ToString("dd-MM-yyyy HH:mm");
+
+                    builder.AppendLine($"<code>Vessel:</code> <b>{vesselName}</b>");
+                    builder.AppendLine($"<code>ARR:</code> {arrival}");
+                    builder.AppendLine($"<code>DEP:</code> {departure}");
+                    builder.AppendLine();
+
+                    if (builder.Length > 1800)
+                    {
+                        result.Add(builder.ToString());
+                        builder.Clear();
+                    }
+                }
+            }
+            else
+            {
+                for (int i = port.Vessels.Count - 1; i >= 0; i--)
+                {
+                    string vesselName = port.Vessels[i].ShipName.ToUpper();
+                    string arrival = port.Vessels[i].Arrival.ToString("dd-MM-yyyy HH:mm");
+                    string departure = port.Vessels[i].Departure.ToString("dd-MM-yyyy HH:mm");
+
+                    builder.AppendLine($"<code>Vessel:</code>: <b>{vesselName}</b>");
+                    builder.AppendLine($"<code>ARR:</code> {arrival}");
+                    builder.AppendLine($"<code>DEP:</code> {departure}");
+                    builder.AppendLine();
+
+                    if (builder.Length > 1800)
+                    {
+                        result.Add(builder.ToString());
+                        builder.Clear();
+                    }
+                }
+            }
+            result.Add(builder.ToString());
+            return result;
+        }
+        public Root GetRoot()
+        {
+            Root vessels = ParseActiveVesselsFromJson();
+            Root ports = ParseActivePortsFromJson();
+            string fileName = "emoji_flags.txt";
+            string path = Path.Combine(Environment.CurrentDirectory, @"Services\Resources\", fileName);
+            string[] emojis = File.ReadAllLines(path);
+            foreach (var port in ports.Ports)
+            {
+                foreach (var line in emojis)
+                {
+                    if (port.countryName.Contains(line.Split(':')[1].Trim()))
+                    {
+                        port.emoji = line.Split(':')[0].Trim();
+                    }
+                }
+            }
+            Root root = new();
+            root.Vessels = vessels.Vessels;
+            root.Ports = ports.Ports;
+            return root;
+
+            /*Root root = new();
+            root = MemoryCache.Default["root"] as Root;
+            if (root == null)
+            {
+                Root vessels = ParseActiveVesselsFromJson();
+                Root ports = ParseActivePortsFromJson();
+                string fileName = "emoji_flags.txt";
+                string path = Path.Combine(Environment.CurrentDirectory, @"Services\Resources\", fileName);
+                string[] emojis = File.ReadAllLines(path);
+                foreach (var port in ports.Ports)
+                {
+                    foreach (var line in emojis)
+                    {
+                        if (line.Contains(port.countryName))
+                        {
+                            port.emoji = line.Split(':')[0].Trim();
+                        }
+                    }
+                }
+
+                root.Vessels = vessels.Vessels;
+                root.Ports = ports.Ports;
+                MemoryCache.Default["root"] = root;
+            }
+            return root;*/
+        }
+        public Root ParseActiveVesselsFromJson()
+        {
+            Root root = new();
+            root = JsonConvert.DeserializeObject<Root>(GetActiveVessels().Result);
+            return root;
+        }
+        private async Task<string> GetActiveVessels()
+        {
+            HttpRequestMessage requestForPortsList = new();
+            string getPortsURL = "https://api.maerskline.com/maeu/schedules/vessel/active";
+            requestForPortsList.RequestUri = new Uri(getPortsURL);
+            HttpClient client = new();
+            try
+            {
+                var maerskResponse = await client.SendAsync(requestForPortsList);
+                string stringMaerskResponse = await maerskResponse.Content.ReadAsStringAsync();
+                stringMaerskResponse = stringMaerskResponse.Replace("code", "vesselCode");
+                stringMaerskResponse = stringMaerskResponse.Replace("name", "vessel");
+                return stringMaerskResponse;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            finally
+            {
+                client.Dispose();
+            }
+            return null;
+        }
+        public Root ParseActivePortsFromJson()
+        {
+            Root root = new();
+            root = JsonConvert.DeserializeObject<Root>(GetActivePorts().Result);
+            return root;
+        }
+        private async Task<string> GetActivePorts()
+        {
+            HttpRequestMessage requestForPortsList = new();
+            string getPortsURL = "https://api.maerskline.com/maeu/schedules/port/active";
+            requestForPortsList.RequestUri = new Uri(getPortsURL);
+            HttpClient client = new();
+            try
+            {
+                var maerskResponse = await client.SendAsync(requestForPortsList);
+                string stringMaerskResponse = await maerskResponse.Content.ReadAsStringAsync();
+                stringMaerskResponse = stringMaerskResponse.Replace("locationName", "port");
+                stringMaerskResponse = stringMaerskResponse.Replace("geoId", "portGeoId");
+                return stringMaerskResponse;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            finally
+            {
+                client.Dispose();
+            }
+            return null;
+        }
+
+        public List<Ship> GetShipFromActive(string name, Root root)
+        {
+            List<Ship> shipList = new();
+            foreach (var ship in root.Vessels)
+            {
+                if (ship.ShipName.Contains(name.ToUpper()))
+                {
+                    shipList.Add(ship);
+                }
+            }
+            return shipList;
+        }
+        public List<Port> GetPortFromActive(string name, Root root)
+        {
+            List<Port> portList = new();
+            foreach (var port in root.Ports)
+            {
+                if (port.portName.ToLower().Contains(name.ToLower()))
+                {
+                    portList.Add(port);
+                }
+            }
+            return portList;
         }
     }
 }
