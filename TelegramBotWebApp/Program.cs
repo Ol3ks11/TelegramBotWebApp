@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
 
 Vessel vessel = new();
+vessel.carrierVesselCode = "I1C";
 vessel.GetSchedule(botConfig.ConsumerKey);
 
 builder.Logging.ClearProviders();
