@@ -84,7 +84,7 @@ namespace TelegramBotWebApp
             return activeVesselsList;
 
         }
-        private async Task<string> GetActiveVesselsJson(string consumerKey)
+        public async Task<string> GetActiveVesselsJson(string consumerKey)
         {
             HttpRequestMessage request = new();
             string getPortsURL = "https://api.maersk.com/schedules/active-vessels";

@@ -81,7 +81,8 @@ public class HandleUpdateService
         chat = GetChat(update).Result;
         user = ParsePinnedMsg(update).Result;
         ToLogRecievedMsg(update,user);
-        _logger.LogInformation("\n ACTIVE VESSELS COUNT: {vesselManager.GetActiveVesselsList(_botConfig.ConsumerKey).Count}", vesselManager.GetActiveVesselsList(_botConfig.ConsumerKey).Count); 
+        int jsonCount = vesselManager.GetActiveVesselsJson(_botConfig.ConsumerKey).Result.ToCharArray().Length;
+        _logger.LogInformation("\n ACTIVE VESSELS COUNT CHARACTERS: {jsonCount}", jsonCount); 
 
         if (update.Message.Type != MessageType.Text)
             return;
