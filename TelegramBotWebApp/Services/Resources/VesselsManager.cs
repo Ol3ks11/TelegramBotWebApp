@@ -106,7 +106,7 @@ namespace TelegramBotWebApp
             {
                 client.Dispose();
             }
-            return null;
+            return "fail";
         }
         public List<Vessel> GetMatchingVesselsFrActive(string name, string consumerKey)
         {

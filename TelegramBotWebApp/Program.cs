@@ -8,6 +8,10 @@ using TelegramBotWebApp.Services.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
+
+Vessel vessel = new();
+vessel.GetSchedule(botConfig.ConsumerKey);
+
 builder.Logging.ClearProviders();
 builder.Logging.AddAzureWebAppDiagnostics();
 builder.Services.AddHostedService<ConfigureWebhook>();
