@@ -4,11 +4,20 @@ using TelegramBotWebApp.Services.Resources;
 using Telegram.Bot.Requests.Abstractions;
 using Telegram.Bot.Examples.WebHook.Services;
 using Telegram.Bot.Examples.WebHook;
+using Microsoft.Extensions.Logging;
 
 namespace TelegramBotWebApp
 {
     public class VesselsManager
     {
+        public List<Vessel> ActiveVessels { get; set; }
+
+        public VesselsManager(string consumerKey) 
+        {
+            ActiveVessels = this.GetActiveVesselsList(consumerKey);
+        }
+
+        private readonly ILogger<HandleUpdateService> _logger;
         public List<string> BuildSchedule(Schedule rootSchedule, UserSet user)
         {
             StringBuilder builder = new();
@@ -108,12 +117,13 @@ namespace TelegramBotWebApp
             }
             return "fail";
         }
-        public List<Vessel> GetMatchingVesselsFrActive(string name, string consumerKey)
+        public List<Vessel> GetMatchingVesselsFrActive(string name)
         {
             //RootActiveVessels root = GetActiveVesselsList();
-            List<Vessel> activeVesselsList = GetActiveVesselsList(consumerKey);
+            //List<Vessel> activeVesselsList = GetActiveVesselsList(consumerKey);
+
             List<Vessel> matchingVesselsList = new();
-            foreach (var vessel in activeVesselsList)
+            foreach (var vessel in ActiveVessels)
             {
                 if (vessel.vesselName.Contains(name.ToUpper()))
                 {

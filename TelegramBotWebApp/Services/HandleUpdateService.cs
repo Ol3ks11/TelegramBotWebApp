@@ -16,17 +16,18 @@ public class HandleUpdateService
     private readonly BotConfiguration _botConfig;
     private UserSet user = new();
     private Chat chat = new();
-    private VesselsManager vesselManager;
+    private VesselsManager _vesselManager;
     public HandleUpdateService(ITelegramBotClient botClient, ILogger<HandleUpdateService> logger, IConfiguration configuration)
     {
         _botClient = botClient;
         _logger = logger;
         _botConfig = configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
     }
-    public async Task EchoAsync(Update update)
+    public async Task EchoAsync(Update update, VesselsManager vesselsManager1)
     {
         //chat = GetChat(update).Result;
         //user = ParsePinnedMsg(update).Result;
+        _vesselManager = vesselsManager1;
 
         var handler = update.Type switch
         {
@@ -56,8 +57,7 @@ public class HandleUpdateService
 
             if (update.CallbackQuery != null)
             {
-                List<Vessel> ships = vesselManager.GetMatchingVesselsFrActive(update.CallbackQuery.Data, _botConfig.ConsumerKey);
-                Vessel ship = ships.Where(x => x.vesselName.Equals(update.CallbackQuery.Data)).First();
+                Vessel ship = _vesselManager.ActiveVessels.Where(x => x.vesselName.Equals(update.CallbackQuery.Data)).First();
                 await _botClient.AnswerCallbackQueryAsync(update.CallbackQuery.Id, $"🛳 {ship.vesselName}");
                 await EditPinnedShip(ship);
                 await _botClient.SendTextMessageAsync(chat.Id, $"🛳 {ship.vesselName}");
@@ -81,7 +81,7 @@ public class HandleUpdateService
         chat = GetChat(update).Result;
         user = ParsePinnedMsg(update).Result;
         ToLogRecievedMsg(update,user);
-        int jsonCount = vesselManager.GetActiveVesselsJson(_botConfig.ConsumerKey).Result.ToCharArray().Length;
+        int jsonCount = _vesselManager.GetActiveVesselsJson(_botConfig.ConsumerKey).Result.ToCharArray().Length;
         _logger.LogInformation("\n ACTIVE VESSELS COUNT CHARACTERS: {jsonCount}", jsonCount); 
 
         if (update.Message.Type != MessageType.Text)
@@ -189,7 +189,7 @@ public class HandleUpdateService
         {
             Vessel vessel = user.targetVessel;
             vessel.GetSchedule(_botConfig.ConsumerKey);
-            List<string> schedule = vesselManager.BuildSchedule(vessel.schedule, user);
+            List<string> schedule = _vesselManager.BuildSchedule(vessel.schedule, user);
             for (int i = 0; i < schedule.Count - 1; i++)
             {
                 await _botClient.SendTextMessageAsync(chat.Id, schedule[i], ParseMode.Html);
@@ -199,7 +199,7 @@ public class HandleUpdateService
 
         async Task<Message> CheckIfNameLegit(ITelegramBotClient bot)
         {
-            List<Vessel> shipList = vesselManager.GetMatchingVesselsFrActive(update.Message.Text, _botConfig.ConsumerKey);
+            List<Vessel> shipList = _vesselManager.ActiveVessels;
             _logger.LogInformation("\n MessageText: {shipList.count}", shipList.Count);
             List<List<InlineKeyboardButton>> keyboard = new();
 

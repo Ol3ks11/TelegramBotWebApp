@@ -9,10 +9,6 @@ using TelegramBotWebApp.Services.Resources;
 var builder = WebApplication.CreateBuilder(args);
 var botConfig = builder.Configuration.GetSection("BotConfiguration").Get<BotConfiguration>();
 
-Vessel vessel = new();
-vessel.carrierVesselCode = "I1C";
-vessel.GetSchedule(botConfig.ConsumerKey);
-
 builder.Logging.ClearProviders();
 builder.Logging.AddAzureWebAppDiagnostics();
 builder.Services.AddHostedService<ConfigureWebhook>();
@@ -21,9 +17,9 @@ builder.Services.AddHttpClient("tgwebhook")
 builder.Services.AddScoped<HandleUpdateService>();
 builder.Services.AddControllers().AddNewtonsoftJson();
 
-//VesselsManager vesselsManager = new();
+VesselsManager vesselsManager = new(botConfig.ConsumerKey);
 //Root root = vesselsManager.GetRoot();
-//builder.Services.AddSingleton<Root>(root);
+builder.Services.AddSingleton<VesselsManager>(vesselsManager);
 
 var app = builder.Build();
 app.UseRouting();
