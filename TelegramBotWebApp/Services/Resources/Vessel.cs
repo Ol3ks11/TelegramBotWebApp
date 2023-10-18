@@ -18,7 +18,7 @@ public class Vessel
         schedule = JsonConvert.DeserializeObject<Schedule>(GetScheduleJson(comsumerKey).Result);
 
         string fileName = "emoji_flags.txt";
-        string path = Path.Combine(@"D:\С#\MaerskScheduleBot\MaerskScheduleBot\Resources\emoji_flags.txt");
+        string path = Path.Combine(Environment.CurrentDirectory, @"Services\Resources\", fileName);
         string[] emojis = File.ReadAllLines(path);
         foreach (var vesselCall in schedule.vesselCalls)
         {
