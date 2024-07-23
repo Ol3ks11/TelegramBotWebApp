@@ -125,9 +125,12 @@ namespace TelegramBotWebApp
             List<Vessel> matchingVesselsList = new();
             foreach (var vessel in ActiveVessels)
             {
-                if (vessel.vesselName.Contains(name.ToUpper()))
                 {
-                    matchingVesselsList.Add(vessel);
+                    string vesselNameUpper = vessel.vesselName.ToUpper();
+                    if (vesselNameUpper.Contains(name.ToUpper()))
+                    {
+                        matchingVesselsList.Add(vessel);
+                    }
                 }
             }
             return matchingVesselsList;
