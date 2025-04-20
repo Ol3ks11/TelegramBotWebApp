@@ -34,7 +34,7 @@ public class Vessel
 
     private async Task<string> GetScheduleJson(string consumerKey)
     {
-        DateTime todayDate = DateTime.Today;
+        DateTime todayDate = DateTime.Today.AddDays(-1);
         string today = todayDate.ToString("yyyy-MM-dd");
         string plus90 = todayDate.AddDays(90).ToString("yyyy-MM-dd");
         HttpRequestMessage request = new();
