@@ -126,6 +126,7 @@ namespace TelegramBotWebApp
             foreach (var vessel in ActiveVessels)
             {
                 {
+                    if (vessel.vesselName == null) continue;
                     string vesselNameUpper = vessel.vesselName.ToUpper();
                     if (vesselNameUpper.Contains(name.ToUpper()))
                     {
