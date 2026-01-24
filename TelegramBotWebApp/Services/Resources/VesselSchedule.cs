@@ -26,11 +26,13 @@ public class VesselSchedule
 
     private string GetAPIKey()
     {
-        string path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-        string jsonData = System.IO.File.ReadAllText(path);
+        var config = new ConfigurationBuilder()
+        .SetBasePath(AppContext.BaseDirectory)
+        .AddJsonFile("appsettings.json", optional: false)
+        .AddEnvironmentVariables() // This is the magic line!
+        .Build();
 
-        var root = JObject.Parse(jsonData);
-        string consumerKey = (string)root["BotConfiguration"]?["ConsumerKey"];
+        string consumerKey = config["BotConfiguration:ConsumerKey"];
         logger.LogInformation("CONSUMER KEY 5 - " + consumerKey[5]);
         return consumerKey;
     }
