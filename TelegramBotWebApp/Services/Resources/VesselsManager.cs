@@ -1,133 +1,60 @@
 ﻿using Newtonsoft.Json;
-using System.Text;
-using TelegramBotWebApp.Services.Resources;
-using Telegram.Bot.Requests.Abstractions;
-using Telegram.Bot.Examples.WebHook.Services;
-using Telegram.Bot.Examples.WebHook;
-using Microsoft.Extensions.Logging;
 
 namespace TelegramBotWebApp
 {
     public class VesselsManager
     {
-        public List<Vessel> ActiveVessels { get; set; }
+        public List<Vessel> vesselsList { get; set; }
 
-        public VesselsManager(string consumerKey) 
+        public VesselsManager(string consumerKey)
         {
-            ActiveVessels = this.GetActiveVesselsList(consumerKey);
+            vesselsList = GetActiveVessels(consumerKey);
         }
 
-        private readonly ILogger<HandleUpdateService> _logger;
-        public List<string> BuildSchedule(Schedule rootSchedule, UserSet user)
+        public List<Vessel> GetActiveVessels(string consumerKey)
         {
-            StringBuilder builder = new();
-            List<string> result = new();
-            builder.AppendLine($"Schedule for <b>{user.targetVessel.vesselName}</b>:");
-            builder.AppendLine();
-            if (user.PrintAscending == true)
+            string activeVesselsJsonStr = GetActiveVesselsJson(consumerKey).Result;
+            var vesselsList = JsonConvert.DeserializeObject<List<Vessel>>(activeVesselsJsonStr);
+            if (vesselsList != null)
             {
-                for (int i = 0; i < rootSchedule.vesselCalls.Count; i++)
-                {
-                    string portEmoji = rootSchedule.vesselCalls[i].facility.emoji;
-                    string portName = rootSchedule.vesselCalls[i].facility.portName.ToUpper();
-                    string carrierTerminalCode = rootSchedule.vesselCalls[i].facility.carrierTerminalCode;
-
-                    builder.AppendLine($"<code>Port call:</code> {portEmoji} <b>{portName}</b>");
-                    builder.AppendLine($"<code>Terminal code:</code> <i>{carrierTerminalCode}</i>");
-
-                    for (int j = 0 ; j < rootSchedule.vesselCalls[i].callSchedules.Count; j++)
-                    {
-                        string callEventType      = rootSchedule.vesselCalls[i].callSchedules[j].transportEventTypeCode.ToUpper();
-                        string callEventDateTime  = rootSchedule.vesselCalls[i].callSchedules[j].classifierDateTime.ToString("dd-MM-yyyy HH:mm");
-                        string callEventClassCode = rootSchedule.vesselCalls[i].callSchedules[j].eventClassifierCode.ToUpper();
-
-                        builder.AppendLine($"<code>{callEventType}:</code> {callEventDateTime} , {callEventClassCode}");
-                    }
-                    
-                    builder.AppendLine();
-
-                    if (builder.Length > 1800)
-                    {
-                        result.Add(builder.ToString());
-                        builder.Clear();
-                    }
-                }
+                Console.WriteLine("Active vessels count: " + vesselsList.Count);
             }
             else
             {
-                for (int i = rootSchedule.vesselCalls.Count - 1; i >= 0; i--)
-                {
-                    string portEmoji = rootSchedule.vesselCalls[i].facility.emoji;
-                    string portName = rootSchedule.vesselCalls[i].facility.portName.ToUpper();
-                    string carrierTerminalCode = rootSchedule.vesselCalls[i].facility.carrierTerminalCode;
-
-                    builder.AppendLine($"<code>Port call:</code> {portEmoji} <b>{portName}</b>");
-                    builder.AppendLine($"<code>Terminal code:</code> <i>{carrierTerminalCode}</i>");
-
-                    for (int j = 0; j < rootSchedule.vesselCalls[i].callSchedules.Count; j++)
-                    {
-                        string callEventType = rootSchedule.vesselCalls[i].callSchedules[j].transportEventTypeCode.ToUpper();
-                        string callEventDateTime = rootSchedule.vesselCalls[i].callSchedules[j].classifierDateTime.ToString("dd-MM-yyyy HH:mm");
-                        string callEventClassCode = rootSchedule.vesselCalls[i].callSchedules[j].eventClassifierCode.ToUpper();
-
-                        builder.AppendLine($"<code>{callEventType}:</code> {callEventDateTime} , {callEventClassCode}");
-                    }
-
-                    builder.AppendLine();
-
-                    if (builder.Length > 1800)
-                    {
-                        result.Add(builder.ToString());
-                        builder.Clear();
-                    }
-                }
+                Console.WriteLine("ActiveVesselsJSON Deserialize FAILURE");
             }
-            result.Add(builder.ToString());
-            return result;
+            return vesselsList ?? new List<Vessel>();
         }
-        public List<Vessel> GetActiveVesselsList(string consumerKey)
-        {
-            //RootActiveVessels vessels = new();
-            //vessels = JsonConvert.DeserializeObject<RootActiveVessels>(GetActiveVesselsJson().Result);
-            List<Vessel> activeVesselsList = JsonConvert.DeserializeObject<List<Vessel>>(GetActiveVesselsJson(consumerKey).Result);
-            return activeVesselsList;
 
-        }
-        public async Task<string> GetActiveVesselsJson(string consumerKey)
+        internal async Task<string> GetActiveVesselsJson(string consumerKey)
         {
             HttpRequestMessage request = new();
-            string getPortsURL = "https://api.maersk.com/schedules/active-vessels";
+            string getPortsURL = "https://api.maersk.com/reference-data/vessels";
             request.RequestUri = new Uri(getPortsURL);
-            request.Headers.Add("Accept", "application/json");
+            request.Headers.Add("API-Version", "1");
             request.Headers.Add("Consumer-Key", consumerKey);
             HttpClient client = new();
             try
             {
                 var maerskResponse = await client.SendAsync(request);
                 string stringMaerskResponse = await maerskResponse.Content.ReadAsStringAsync();
+                Console.WriteLine("ActiveVesselsJSON fetch is DONE");
                 return stringMaerskResponse;
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("ActiveVesselsJSON fetch FAILURE");
+                return e.Message;
             }
-            finally
-            {
-                client.Dispose();
-            }
-            return "fail";
         }
+
         public List<Vessel> GetMatchingVesselsFrActive(string name)
         {
-            //RootActiveVessels root = GetActiveVesselsList();
-            //List<Vessel> activeVesselsList = GetActiveVesselsList(consumerKey);
-
             List<Vessel> matchingVesselsList = new();
-            foreach (var vessel in ActiveVessels)
+            foreach (var vessel in vesselsList)
             {
                 {
-                    if (vessel.vesselName == null) continue;
-                    string vesselNameUpper = vessel.vesselName.ToUpper();
+                    string vesselNameUpper = vessel.name.ToUpper();
                     if (vesselNameUpper.Contains(name.ToUpper()))
                     {
                         matchingVesselsList.Add(vessel);
