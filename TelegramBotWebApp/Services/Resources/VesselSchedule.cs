@@ -22,7 +22,7 @@ public class VesselSchedule
 
         var root = JObject.Parse(jsonData);
         string consumerKey = (string)root["BotConfiguration"]?["ConsumerKey"];
-        Console.WriteLine(consumerKey[0]);
+        System.Diagnostics.Trace.TraceInformation("CONSUMER KEY 5 - " + consumerKey[5]);
         return consumerKey;
     }
 
@@ -31,7 +31,7 @@ public class VesselSchedule
         string json = GetScheduleJson(user.targetVessel.imoNumber).Result;
         
         string result = json.Length <= 10 ? json : json[..10];
-        Console.WriteLine(result);
+        System.Diagnostics.Trace.TraceInformation(result);
 
         var rootList = JsonConvert.DeserializeObject<List<Root>>(json);
         scheduleList = rootList[0].vesselSchedules[0].scheduleList;
