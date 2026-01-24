@@ -29,11 +29,10 @@ public class VesselSchedule
         var config = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
         .AddJsonFile("appsettings.json", optional: false)
-        .AddEnvironmentVariables() // This is the magic line!
+        .AddEnvironmentVariables()
         .Build();
 
         string consumerKey = config["BotConfiguration:ConsumerKey"];
-        logger.LogInformation("CONSUMER KEY 5 - " + consumerKey[5]);
         return consumerKey;
     }
 
@@ -41,9 +40,6 @@ public class VesselSchedule
     {
         string json = GetScheduleJson(user.targetVessel.imoNumber).Result;
         
-        string result = json.Length <= 10 ? json : json[..10];
-        logger.LogInformation(result);
-
         var rootList = JsonConvert.DeserializeObject<List<Root>>(json);
         scheduleList = rootList[0].vesselSchedules[0].scheduleList;
 
@@ -119,8 +115,8 @@ public class VesselSchedule
         {
             foreach (var call in scheduleList)
             {
-                builder.AppendLine($"<code>LOCA</code>: {call.location.locationFlag}<b>{call.location.locationName}</b>");
-                builder.AppendLine($"<code>CODE</code>: {call.location.UNLocationCode} - {call.location.facilitySMDGCode}");
+                builder.AppendLine($"<code>LOCA:</code> {call.location.locationFlag}<b>{call.location.locationName}</b>");
+                builder.AppendLine($"<code>CODE:</code> {call.location.UNLocationCode} - {call.location.facilitySMDGCode}");
 
                 if (call.timestamps == null || call.timestamps.Count == 0)
                 {
@@ -148,9 +144,9 @@ public class VesselSchedule
                     stayDuration = sI.ToString() + " hours";
                 }
 
-                builder.AppendLine($"<code>ARRI</code>: {arrivalTime} , {arrivalType}");
-                builder.AppendLine($"<code>DEPA</code>: {departureTime} , {departureType}");
-                builder.AppendLine($"<code>STAY</code>: {stayDuration}");
+                builder.AppendLine($"<code>ARRI:</code> {arrivalTime} , {arrivalType}");
+                builder.AppendLine($"<code>DEPA:</code> {departureTime} , {departureType}");
+                builder.AppendLine($"<code>STAY:</code> {stayDuration}");
                 builder.AppendLine();
 
                 if (builder.Length > 1800)
