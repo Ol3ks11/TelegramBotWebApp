@@ -17,7 +17,7 @@ public class VesselSchedule
 
     private string GetAPIKey()
     {
-        string path = Path.Combine(Environment.CurrentDirectory, @"appsettings.json");
+        string path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
         string jsonData = System.IO.File.ReadAllText(path);
 
         var root = JObject.Parse(jsonData);
@@ -46,7 +46,7 @@ public class VesselSchedule
         }
 
         string fileName = "PortCodes+emoji.txt";
-        string path = Path.Combine(Environment.CurrentDirectory, @"Services\Resources\", fileName);
+        string path = Path.Combine(AppContext.BaseDirectory, @"Services\Resources\", fileName);
 
         var countryData = System.IO.File.ReadLines(path)
         .Select(line => line.Split(':'))
