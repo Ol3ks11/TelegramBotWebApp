@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Telegram.Bot.Examples.WebHook.Services;
 using Telegram.Bot.Types;
 using TelegramBotWebApp;
-using TelegramBotWebApp.Services.Resources;
 
 namespace Telegram.Bot.Examples.WebHook.Controllers;
 
