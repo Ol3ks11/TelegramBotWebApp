@@ -24,4 +24,10 @@
     <None Include="D:\С#\TelegramBotWebApp\TelegramBotWebApp\Services\Resources\.editorconfig" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Update="Services\Resources\Strings.resx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>
