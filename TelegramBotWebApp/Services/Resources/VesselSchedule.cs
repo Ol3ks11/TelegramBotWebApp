@@ -2,12 +2,21 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
+using Telegram.Bot.Examples.WebHook.Services;
 public class VesselSchedule
 {
 
     [JsonProperty("transportCalls")]
     public List<TransportCall> scheduleList { get; set; }
     public List<string> scheduleString;
+    private readonly ILogger<HandleUpdateService> logger;
+    
+    public VesselSchedule(ILogger<HandleUpdateService> _logger)
+    {
+        this.logger = _logger;
+        this.scheduleList = new List<TransportCall>();
+        this.scheduleString = new List<string>();
+    }
 
     public void InitializeSchedule(User user)
     {
@@ -22,7 +31,7 @@ public class VesselSchedule
 
         var root = JObject.Parse(jsonData);
         string consumerKey = (string)root["BotConfiguration"]?["ConsumerKey"];
-        System.Diagnostics.Trace.TraceInformation("CONSUMER KEY 5 - " + consumerKey[5]);
+        logger.LogInformation("CONSUMER KEY 5 - " + consumerKey[5]);
         return consumerKey;
     }
 
@@ -31,7 +40,7 @@ public class VesselSchedule
         string json = GetScheduleJson(user.targetVessel.imoNumber).Result;
         
         string result = json.Length <= 10 ? json : json[..10];
-        System.Diagnostics.Trace.TraceInformation(result);
+        logger.LogInformation(result);
 
         var rootList = JsonConvert.DeserializeObject<List<Root>>(json);
         scheduleList = rootList[0].vesselSchedules[0].scheduleList;

@@ -156,7 +156,7 @@ public class HandleUpdateService
 
     private async Task<Message> SendShipSchedule()
     {
-        VesselSchedule vesselSchedule = new();
+        VesselSchedule vesselSchedule = new(logger);
         vesselSchedule.InitializeSchedule(user);
         var stringList = vesselSchedule.scheduleString;
         for (int i = 0; i < stringList.Count - 1; i++)
