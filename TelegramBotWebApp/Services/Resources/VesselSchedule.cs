@@ -28,6 +28,10 @@ public class VesselSchedule
     private void UpDateSchedule(User user)
     {
         string json = GetScheduleJson(user.targetVessel.imoNumber).Result;
+        
+        string result = json.Length <= 10 ? json : json[..10];
+        Console.WriteLine(result);
+
         var rootList = JsonConvert.DeserializeObject<List<Root>>(json);
         scheduleList = rootList[0].vesselSchedules[0].scheduleList;
 
