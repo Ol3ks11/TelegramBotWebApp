@@ -22,6 +22,7 @@ public class VesselSchedule
 
         var root = JObject.Parse(jsonData);
         string consumerKey = (string)root["BotConfiguration"]?["ConsumerKey"];
+        Console.WriteLine(consumerKey[0]);
         return consumerKey;
     }
 
