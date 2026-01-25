@@ -167,7 +167,8 @@ public class VesselSchedule
             for (int i = scheduleList.Count - 1; i >= 0; i--)
             {
                 var call = scheduleList[i];
-                builder.AppendLine($"Port Call:{call.location.locationFlag}<b>{call.location.locationName}</b>");
+                builder.AppendLine($"<code>LOCA:</code> {call.location.locationFlag}<b>{call.location.locationName}</b>");
+                builder.AppendLine($"<code>CODE:</code> {call.location.UNLocationCode} - {call.location.facilitySMDGCode}");
 
                 if (call.timestamps == null || call.timestamps.Count == 0)
                 {
@@ -181,22 +182,23 @@ public class VesselSchedule
                 Timestamp? departure = call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "ACT" && t.eventTypeCode == "DEPA")
                                  ?? call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "EST" && t.eventTypeCode == "DEPA");
 
-                string arrivalTime = arrival != null ? arrival.eventDateTime.ToString("yyyy-MM-dd") : "N/A";
-                string arrivalType = arrival != null ? arrival.eventTypeCode : "N/A";
+                string arrivalTime = arrival != null ? arrival.eventDateTime.ToString("yyyy-MM-dd HH:mm") : "N/A";
+                string arrivalType = arrival != null ? arrival.eventClassifierCode : "N/A";
 
-                string departureTime = departure != null ? departure.eventDateTime.ToString("yyyy-MM-dd") : "N/A";
-                string departureType = departure != null ? departure.eventTypeCode : "N/A";
+                string departureTime = departure != null ? departure.eventDateTime.ToString("yyyy-MM-dd HH:mm") : "N/A";
+                string departureType = departure != null ? departure.eventClassifierCode : "N/A";
 
                 string stayDuration = "N/A";
                 if (arrival != null && departure != null)
                 {
                     TimeSpan stayInterval = departure.eventDateTime - arrival.eventDateTime;
-                    stayDuration = stayInterval.ToString("hh") + " hours";
+                    int sI = (int)Math.Floor(stayInterval.TotalHours);
+                    stayDuration = sI.ToString() + " hours";
                 }
 
-                builder.AppendLine($"<code>ARRI:</code>: {arrivalTime} , {arrivalType}");
-                builder.AppendLine($"<code>DEPA:</code>: {departureTime} , {departureType}");
-                builder.AppendLine($"Stay Duration: {stayDuration}");
+                builder.AppendLine($"<code>ARRI:</code> {arrivalTime} , {arrivalType}");
+                builder.AppendLine($"<code>DEPA:</code> {departureTime} , {departureType}");
+                builder.AppendLine($"<code>STAY:</code> {stayDuration}");
                 builder.AppendLine();
 
                 if (builder.Length > 1800)
@@ -204,8 +206,9 @@ public class VesselSchedule
                     result.Add(builder.ToString());
                     builder.Clear();
                 }
+
             }
-            
+
             if (builder.Length > 0)
             {
                 result.Add(builder.ToString());
