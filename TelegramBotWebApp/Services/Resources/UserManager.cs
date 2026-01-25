@@ -7,10 +7,11 @@ namespace TelegramBotWebApp
     {
         public List<User> users { get; set; }
         public DateTime LastUpdated { get; set; }
-
-        readonly string filePath = Path.Combine(Environment.CurrentDirectory, @"Services\Resources\users.json");
+        private string filePath;
         public UserManager()
         {
+            string homeDir = Environment.GetEnvironmentVariable("HOME") ?? AppDomain.CurrentDomain.BaseDirectory;
+            filePath = Path.Combine(homeDir, "data", "users.json");
             users = GetUsersFrJSON();
             RemoveOldUsers();
         }
