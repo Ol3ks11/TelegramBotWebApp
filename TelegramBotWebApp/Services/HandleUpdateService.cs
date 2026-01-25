@@ -204,7 +204,7 @@ public class HandleUpdateService
         int rank = 1;
         foreach (var topUser in topUsers)
         {
-            builder.AppendLine($"{rank}. @{topUser.chat.Username} - {topUser.requestCount} requests");
+            builder.AppendLine($"{rank}. @{topUser.chat.Username}, {topUser.chat.FirstName}{topUser.chat.LastName} - {topUser.requestCount} requests");
             rank++;
         }
         userManager.AddCounter(user);
