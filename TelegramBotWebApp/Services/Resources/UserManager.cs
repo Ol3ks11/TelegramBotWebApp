@@ -106,9 +106,9 @@ namespace TelegramBotWebApp
             return user;
         }
 
-        public List<User> GetTop10Users()
+        public List<User> GetTop25Users()
         {
-            return users.OrderByDescending(u => u.requestCount).Take(10).ToList();
+            return users.OrderByDescending(u => u.requestCount).Take(25).ToList();
         }
     }
 }

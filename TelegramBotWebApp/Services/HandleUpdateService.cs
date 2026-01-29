@@ -197,9 +197,9 @@ public class HandleUpdateService
 
     private async Task<Message> GetTop10users()
     {
-        List<User> topUsers = userManager.GetTop10Users();
+        List<User> topUsers = userManager.GetTop25Users();
         StringBuilder builder = new();
-        builder.AppendLine("🏆 Top 10 Active Users 🏆");
+        builder.AppendLine("🏆 Top 25 Active Users 🏆");
         builder.AppendLine();
         int rank = 1;
         foreach (var topUser in topUsers)
@@ -207,6 +207,8 @@ public class HandleUpdateService
             builder.AppendLine($"{rank}. @{topUser.chat.Username}, {topUser.chat.FirstName}{topUser.chat.LastName} - {topUser.requestCount} requests");
             rank++;
         }
+        builder.AppendLine();
+        builder.AppendLine($"Total users - {userManager.users.Count}");
         userManager.AddCounter(user);
         return await client.SendTextMessageAsync(chat, builder.ToString());
     }
