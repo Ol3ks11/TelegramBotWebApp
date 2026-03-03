@@ -45,7 +45,7 @@ public class VesselSchedule
 
         for (int i = 0; i < scheduleList.Count; i++)
         {
-            if (scheduleList[i].timestamps.Any(t => t.eventDateTime < DateTime.Today.AddDays(-2)))
+            if (scheduleList[i].timestamps.Any(t => t.eventDateTime < DateTime.Today.AddDays(-2) && t.eventClassifierCode == "ACT"))
             {
                 scheduleList.RemoveAt(i);
                 i--;
@@ -72,7 +72,7 @@ public class VesselSchedule
     private async Task<string> GetScheduleJson(string vesselIMONumber)
     {
         DateTime startDate = DateTime.Today.AddDays(-1);
-        DateTime endDate = DateTime.Today.AddDays(180);
+        DateTime endDate = DateTime.Today.AddDays(120);
 
         string startDateStr = startDate.ToString("yyyy-MM-dd");
         string endDatestr = endDate.ToString("yyyy-MM-dd");
