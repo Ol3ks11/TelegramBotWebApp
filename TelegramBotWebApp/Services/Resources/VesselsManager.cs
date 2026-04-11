@@ -23,7 +23,15 @@ namespace TelegramBotWebApp
             {
                 Console.WriteLine("ActiveVesselsJSON Deserialize FAILURE");
             }
-            return vesselsList ?? new List<Vessel>();
+            var finalList = new List<Vessel>();
+                foreach (var vessel in vesselsList)
+                {
+                    if (vessel.imoNumber != "blank")
+                    {
+                        finalList.Add(vessel);
+                    }
+            }
+            return finalList ?? new List<Vessel>();
         }
 
         internal async Task<string> GetActiveVesselsJson(string consumerKey)
