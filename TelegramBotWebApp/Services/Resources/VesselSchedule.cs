@@ -5,7 +5,8 @@ using System.Text;
 using Telegram.Bot.Examples.WebHook.Services;
 public class VesselSchedule
 {
-
+    [JsonProperty("vessel")]
+    public Vessel vessel { get; set; }
     [JsonProperty("transportCalls")]
     public List<TransportCall> scheduleList { get; set; }
     public List<string> scheduleString;
@@ -39,9 +40,9 @@ public class VesselSchedule
     private void UpDateSchedule(User user)
     {
         string json = GetScheduleJson(user.targetVessel.imoNumber).Result;
-        
         var rootList = JsonConvert.DeserializeObject<List<Root>>(json);
-        scheduleList = rootList[0].vesselSchedules[0].scheduleList;
+
+        scheduleList = rootList[0].vesselSchedules.FirstOrDefault(s => s.vessel.imoNumber == user.targetVessel.imoNumber)?.scheduleList;
 
         for (int i = 0; i < scheduleList.Count; i++)
         {
