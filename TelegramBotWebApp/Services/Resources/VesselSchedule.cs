@@ -46,7 +46,7 @@ public class VesselSchedule
 
         for (int i = 0; i < scheduleList.Count; i++)
         {
-            if (scheduleList[i].timestamps.Any(t => t.eventDateTime < DateTime.Today.AddDays(-2) && t.eventClassifierCode == "ACT"))
+            if (scheduleList[i].timestamps.Any(t => t.eventDateTime < DateTime.Today.AddDays(-2)))
             {
                 scheduleList.RemoveAt(i);
                 i--;
@@ -112,109 +112,57 @@ public class VesselSchedule
         builder.AppendLine($"Schedule for <b>{user.targetVessel.name}</b>:");
         builder.AppendLine();
 
-        if (user.PrintAscending)
+        for (int i = 0; i < scheduleList.Count; i++)
         {
-            foreach (var call in scheduleList)
+            int index = user.PrintAscending ? i : (scheduleList.Count - 1 - i);
+            var call = scheduleList[index];
+
+            builder.AppendLine($"<code>LOCA</code>: {call.location.locationFlag}<b>{call.location.locationName}</b>");
+            builder.AppendLine($"<code>CODE</code>: {call.location.UNLocationCode} - {call.location.facilitySMDGCode}");
+
+            if (call.timestamps == null || call.timestamps.Count == 0)
             {
-                builder.AppendLine($"<code>LOCA:</code> {call.location.locationFlag}<b>{call.location.locationName}</b>");
-                builder.AppendLine($"<code>CODE:</code> {call.location.UNLocationCode} - {call.location.facilitySMDGCode}");
-
-                if (call.timestamps == null || call.timestamps.Count == 0)
-                {
-                    builder.AppendLine("No schedule data available.");
-                    continue;
-                }
-
-                Timestamp? arrival = call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "ACT" && t.eventTypeCode == "ARRI")
-                                 ?? call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "EST" && t.eventTypeCode == "ARRI");
-
-                Timestamp? departure = call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "ACT" && t.eventTypeCode == "DEPA")
-                                 ?? call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "EST" && t.eventTypeCode == "DEPA");
-
-                string arrivalTime = arrival != null ? arrival.eventDateTime.ToString("yyyy-MM-dd HH:mm") : "N/A";
-                string arrivalType = arrival != null ? arrival.eventClassifierCode : "N/A";
-
-                string departureTime = departure != null ? departure.eventDateTime.ToString("yyyy-MM-dd HH:mm") : "N/A";
-                string departureType = departure != null ? departure.eventClassifierCode : "N/A";
-
-                string stayDuration = "N/A";
-                if (arrival != null && departure != null)
-                {
-                    TimeSpan stayInterval = departure.eventDateTime - arrival.eventDateTime;
-                    int sI = (int)Math.Floor(stayInterval.TotalHours);
-                    stayDuration = sI.ToString() + " hours";
-                }
-
-                builder.AppendLine($"<code>ARRI:</code> {arrivalTime} , {arrivalType}");
-                builder.AppendLine($"<code>DEPA:</code> {departureTime} , {departureType}");
-                builder.AppendLine($"<code>STAY:</code> {stayDuration}");
-                builder.AppendLine();
-
-                if (builder.Length > 1800)
-                {
-                    result.Add(builder.ToString());
-                    builder.Clear();
-                }
-
+                builder.AppendLine("No schedule data available.");
+                continue;
             }
 
-            if (builder.Length > 0)
+            Timestamp? arrival = call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "ACT" && t.eventTypeCode == "ARRI")
+                             ?? call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "EST" && t.eventTypeCode == "ARRI");
+
+            Timestamp? departure = call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "ACT" && t.eventTypeCode == "DEPA")
+                             ?? call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "EST" && t.eventTypeCode == "DEPA");
+
+            string arrivalTime = arrival != null ? arrival.eventDateTime.ToString("yyyy-MM-dd HH:mm") : "N/A";
+            string arrivalType = arrival != null ? arrival.eventClassifierCode : "N/A";
+
+            string departureTime = departure != null ? departure.eventDateTime.ToString("yyyy-MM-dd HH:mm") : "N/A";
+            string departureType = departure != null ? departure.eventClassifierCode : "N/A";
+
+            string stayDuration = "N/A";
+            if (arrival != null && departure != null)
+            {
+                TimeSpan stayInterval = departure.eventDateTime - arrival.eventDateTime;
+                int sI = (int)Math.Floor(stayInterval.TotalHours);
+                stayDuration = sI.ToString() + " hours";
+            }
+
+            builder.AppendLine($"<code>ARRI</code>: {arrivalTime} , {arrivalType}");
+            builder.AppendLine($"<code>DEPA</code>: {departureTime} , {departureType}");
+            builder.AppendLine($"<code>STAY</code>: {stayDuration}");
+            builder.AppendLine();
+
+            if (builder.Length > 1800)
             {
                 result.Add(builder.ToString());
+                builder.Clear();
             }
         }
-        else
+
+        if (builder.Length > 0)
         {
-            for (int i = scheduleList.Count - 1; i >= 0; i--)
-            {
-                var call = scheduleList[i];
-                builder.AppendLine($"<code>LOCA:</code> {call.location.locationFlag}<b>{call.location.locationName}</b>");
-                builder.AppendLine($"<code>CODE:</code> {call.location.UNLocationCode} - {call.location.facilitySMDGCode}");
-
-                if (call.timestamps == null || call.timestamps.Count == 0)
-                {
-                    builder.AppendLine("No schedule data available.");
-                    continue;
-                }
-
-                Timestamp? arrival = call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "ACT" && t.eventTypeCode == "ARRI")
-                                 ?? call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "EST" && t.eventTypeCode == "ARRI");
-
-                Timestamp? departure = call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "ACT" && t.eventTypeCode == "DEPA")
-                                 ?? call.timestamps.FirstOrDefault(t => t.eventClassifierCode == "EST" && t.eventTypeCode == "DEPA");
-
-                string arrivalTime = arrival != null ? arrival.eventDateTime.ToString("yyyy-MM-dd HH:mm") : "N/A";
-                string arrivalType = arrival != null ? arrival.eventClassifierCode : "N/A";
-
-                string departureTime = departure != null ? departure.eventDateTime.ToString("yyyy-MM-dd HH:mm") : "N/A";
-                string departureType = departure != null ? departure.eventClassifierCode : "N/A";
-
-                string stayDuration = "N/A";
-                if (arrival != null && departure != null)
-                {
-                    TimeSpan stayInterval = departure.eventDateTime - arrival.eventDateTime;
-                    int sI = (int)Math.Floor(stayInterval.TotalHours);
-                    stayDuration = sI.ToString() + " hours";
-                }
-
-                builder.AppendLine($"<code>ARRI:</code> {arrivalTime} , {arrivalType}");
-                builder.AppendLine($"<code>DEPA:</code> {departureTime} , {departureType}");
-                builder.AppendLine($"<code>STAY:</code> {stayDuration}");
-                builder.AppendLine();
-
-                if (builder.Length > 1800)
-                {
-                    result.Add(builder.ToString());
-                    builder.Clear();
-                }
-
-            }
-
-            if (builder.Length > 0)
-            {
-                result.Add(builder.ToString());
-            }
+            result.Add(builder.ToString());
         }
+
         return result;
     }
 }
