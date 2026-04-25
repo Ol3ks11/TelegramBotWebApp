@@ -74,18 +74,18 @@ public class VesselSchedule
 
     private async Task<string> GetScheduleJson(string vesselIMONumber)
     {
-        DateTime startDate = DateTime.Today.AddDays(-5);
+        DateTime startDate = DateTime.Today.AddDays(-1);
         DateTime endDate = DateTime.Today.AddDays(120);
 
         string startDateStr = startDate.ToString("yyyy-MM-dd");
         string endDatestr = endDate.ToString("yyyy-MM-dd");
 
         HttpRequestMessage request = new();
-        string getPortsURL =
+        string getPortsURL = 
             "https://api.maersk.com/ocean/commercial-schedules/dcsa/v1/vessel-schedules?" +
-            "vesselIMONumber=" + vesselIMONumber; //+ "&" +
-                                                  //"startDate=" + startDateStr + "&" +
-                                                  //"endDate=" + endDatestr;
+            "vesselIMONumber=" + vesselIMONumber + "&" +
+            "startDate" + startDateStr + "&" +
+            "endDate" + endDatestr;
         request.RequestUri = new Uri(getPortsURL);
         //request.Headers.Add("API-Version", "1");
         request.Headers.Add("Consumer-Key", this.GetAPIKey());
