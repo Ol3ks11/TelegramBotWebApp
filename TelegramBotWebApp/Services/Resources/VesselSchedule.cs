@@ -44,11 +44,9 @@ public class VesselSchedule
 
         scheduleList = rootList[0].vesselSchedules.FirstOrDefault(s => s.vessel.imoNumber == user.targetVessel.imoNumber)?.scheduleList;
 
-        //scheduleList = rootList[0].vesselSchedules[0].scheduleList;
-
         for (int i = 0; i < scheduleList.Count; i++)
         {
-            if (scheduleList[i].timestamps.Any(t => t.eventDateTime < DateTime.Today.AddDays(-2)))
+            if (scheduleList[i].timestamps.Any(t => t.eventDateTime < DateTime.Today.AddDays(-3)))
             {
                 scheduleList.RemoveAt(i);
                 i--;
@@ -56,7 +54,7 @@ public class VesselSchedule
         }
 
         string fileName = "PortCodes+emoji.txt";
-        string path = Path.Combine(Environment.CurrentDirectory, @"Resources\", fileName);
+        string path = Path.Combine(AppContext.BaseDirectory, @"Services\Resources\", fileName);
 
         var countryData = System.IO.File.ReadLines(path)
         .Select(line => line.Split(':'))
